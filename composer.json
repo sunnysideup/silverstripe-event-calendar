@@ -27,12 +27,12 @@
 	},
 	"extra": {
 		"expose": [
-            "client"
+			"client"
 		]
 	},
 	"replace": {
 		"silverstripe/event-calendar": "*"
 	},
 	"minimum-stability": "dev",
-    "prefer-stable": true
+	"prefer-stable": true
 }

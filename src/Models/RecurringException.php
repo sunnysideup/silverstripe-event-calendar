@@ -2,7 +2,7 @@
 
 /**
  * An exception to a recurring event
- * 
+ *
  * @author Aaron Carlino
  * @author Grant Heggie
  * @package silverstripe-event-calendar
@@ -18,7 +18,7 @@ use UncleCheese\EventCalendar\Helpers\CalendarUtil;
 use UncleCheese\EventCalendar\Models\CalendarDateTime;
 use UncleCheese\EventCalendar\Pages\CalendarEvent;
 
-class RecurringException extends DataObject 
+class RecurringException extends DataObject
 {
     private static $table_name = 'UncleCheese_RecurringException';
 
@@ -26,21 +26,21 @@ class RecurringException extends DataObject
 
     private static $plural_name = 'Recurring exceptions';
     
-	private static $db = [
-		'ExceptionDate' => 'Date'
+    private static $db = [
+        'ExceptionDate' => 'Date'
     ];
-	
-	private static $has_one = [
-		'CalendarEvent' => CalendarEvent::class
+    
+    private static $has_one = [
+        'CalendarEvent' => CalendarEvent::class
     ];
 
-	private static $default_sort = "ExceptionDate ASC";
+    private static $default_sort = "ExceptionDate ASC";
 
     public function getCMSFields()
     {
         //DateField::set_default_config('showcalendar', true);
         $fields = FieldList::create(
-            DateField::create('ExceptionDate', _t(__CLASS__.'.EXCEPTIONDATE','Exception date'))
+            DateField::create('ExceptionDate', _t(__CLASS__.'.EXCEPTIONDATE', 'Exception date'))
         );
 
         $this->extend('updateCMSFields', $fields);
@@ -48,10 +48,10 @@ class RecurringException extends DataObject
         return $fields;
     }
 
-   public function summaryFields()
-   {
+    public function summaryFields()
+    {
         return [
-            'FormattedExceptionDate' => _t(__CLASS__.'.EXCEPTIONDATE','Exception date')
+            'FormattedExceptionDate' => _t(__CLASS__.'.EXCEPTIONDATE', 'Exception date')
         ];
     }
 
@@ -60,8 +60,8 @@ class RecurringException extends DataObject
         if (!$this->ExceptionDate) {
             return CalendarDateTime::config()->formatted_field_empty_string;
         }
-        return CalendarUtil::get_date_format() == "mdy" 
-            ? $this->obj('ExceptionDate')->Format('m-d-Y') 
+        return CalendarUtil::get_date_format() == "mdy"
+            ? $this->obj('ExceptionDate')->Format('m-d-Y')
             : $this->obj('ExceptionDate')->Format('d-m-Y');
     }
 

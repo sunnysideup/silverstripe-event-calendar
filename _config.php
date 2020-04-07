@@ -5,7 +5,7 @@ $customDateTemplates = array(
 /*
  You can modify the date display by assigning new date templates to any of the following
    date scenarios. Use the above date format keys.
-   
+
 'OneDay' 			=> '$StartMonthNameShort. $StartDayNumberShort, $StartYearLong'
 'SameMonthSameYear' => '$StartMonthNameShort. $StartDayNumberShort - $EndDatNumberShort, $EndYearLong'
 'DiffMonthSameYear' => '$StartMonthNameShort. $StartDayNumberShort - $EndMonthNameShort. $EndDayNumberShort, $EndYearLong'
