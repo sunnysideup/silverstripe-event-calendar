@@ -65,4 +65,4 @@ nb:
     SUBSCRIBE: $lang['nb_NO']['Calendar.ss']['SUBSCRIBE']
   UncleCheese\EventCalendar\Views\CalendarWidget:
     LOCALEFILE: 'date_nb.js'
-    DATEJSFILE: 'unclecheese/silverstripe-event-calendar:client/dist/js/lang/calendar_nb.js'
+    DATEJSFILE: 'mattclegg/silverstripe-event-calendar:client/dist/js/lang/calendar_nb.js'

@@ -1,5 +1,5 @@
 {
-	"name":"unclecheese/silverstripe-event-calendar",
+	"name":"mattclegg/silverstripe-event-calendar",
 	"type": "silverstripe-vendormodule",
 	"description": "Event calendar for the Silverstripe CMS",
 	"keywords": [
@@ -23,7 +23,7 @@
 		"nesbot/carbon": "1.39.1"
 	},
 	"support": {
-		"issues": "https://github.com/unclecheese/silverstripe-event-calendar/issues"
+		"issues": "https://github.com/mattclegg/silverstripe-event-calendar/issues"
 	},
 	"extra": {
 		"expose": [
@@ -31,7 +31,8 @@
 		]
 	},
 	"replace": {
-		"silverstripe/event-calendar": "*"
+		"silverstripe/event-calendar": "*",
+		"unclecheese/event-calendar": "*"
 	},
 	"minimum-stability": "dev",
 	"prefer-stable": true
