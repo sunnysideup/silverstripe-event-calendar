@@ -179,7 +179,6 @@ class CalendarController extends PageController
         $xml = str_replace('&nbsp;', '&#160;', $rss->renderWith('SilverStripe\Control\RSS\RSSFeed'));
         $xml = preg_replace('/<!--(.|\s)*?-->/', '', $xml);
         $xml = trim($xml);
-        HTTP::add_cache_headers();
 
         return $this->getResponse()
             ->addHeader('Content-Type', 'application/rss+xml')
