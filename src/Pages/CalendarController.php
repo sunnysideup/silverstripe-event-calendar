@@ -13,6 +13,7 @@ namespace UncleCheese\EventCalendar\Pages;
 use Carbon\Carbon;
 use UncleCheese\EventCalendar\Helpers\CalendarUtil;
 use UncleCheese\EventCalendar\Pages\Calendar;
+use UncleCheese\EventCalendar\Helpers\ICSWriter;
 use SilverStripe\Control\Controller;
 use SilverStripe\Control\Director;
 use SilverStripe\Control\Email\Email;

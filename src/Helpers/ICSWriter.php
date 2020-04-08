@@ -28,6 +28,8 @@ namespace UncleCheese\EventCalendar\Helpers;
 
 use SilverStripe\Control\Director;
 use SilverStripe\Core\Injector\Injectable;
+use SilverStripe\ORM\FieldType\DBDate;
+use SilverStripe\ORM\FieldType\DBTime;
 use UncleCheese\EventCalendar\Models\CalendarDateTime;
 use UncleCheese\EventCalendar\Pages\Calendar;
 
@@ -141,15 +143,15 @@ class ICSWriter
     /**
      * Get an ical formatted datetime string.
      *
-     * @param Date $date
-     * @param Time $time
+     * @param DBDate $date
+     * @param DBTime $time
      * @return string
      *
      * @todo Add timezone support - note atm there is no timezone support in either Date or Time.
      *
      * @author Alex Hayes <alex.hayes@dimension27.com>
      */
-    protected function getFormatedDateTime(Date $date = null, Time $time = null)
+    protected function getFormatedDateTime(DBDate $date = null, DBTime $time = null)
     {
         $timestamp = null;
         if ($date && $time) {
