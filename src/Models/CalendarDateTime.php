@@ -18,7 +18,7 @@ use SilverStripe\Forms\FieldList;
 use SilverStripe\Forms\TimeField;
 use SilverStripe\ORM\DataObject;
 use SilverStripe\ORM\FieldType\DBField;
-use SilverStripe\Security\Member;
+use SilverStripe\Security\Security;
 use SilverStripe\Security\Permission;
 use UncleCheese\EventCalendar\Helpers\CalendarUtil;
 use UncleCheese\EventCalendar\Model\CalendarAnnouncement;
@@ -35,7 +35,7 @@ class CalendarDateTime extends DataObject
         'EndTime' => 'Time',
         'AllDay' => 'Boolean'
     ];
-    
+
     private static $has_one = [
         'Event' => CalendarEvent::class
     ];
@@ -116,7 +116,7 @@ class CalendarDateTime extends DataObject
             ]
         )->renderWith(__CLASS__ .'\DateRange');
     }
-    
+
     /**
      * @return string
      */
@@ -149,7 +149,7 @@ class CalendarDateTime extends DataObject
         if ($this->Event()->Recursion) {
             return $this->Event()->Parent()->getNextRecurringEvents($this->Event(), $this);
         }
-        
+
         return self::get()->filter(
             [
                 'EventID' => $this->EventID,
@@ -237,7 +237,7 @@ class CalendarDateTime extends DataObject
             ? $this->obj('StartDate')->Format('MM-dd-Y')
             : $this->obj('StartDate')->Format('dd-MM-Y');
     }
-    
+
     /**
      * @return string
      */
@@ -317,14 +317,14 @@ class CalendarDateTime extends DataObject
 
         return $dates;
     }
-    
+
     /**
      * @return bool
      */
     public function canCreate($member = null, $context = [])
     {
         if (!$member) {
-            $member = Member::currentUser();
+            $member = Security::getCurrentUser();
         }
         $extended = $this->extendedCan(__FUNCTION__, $member);
         if ($extended !== null) {
@@ -339,7 +339,7 @@ class CalendarDateTime extends DataObject
     public function canEdit($member = null)
     {
         if (!$member) {
-            $member = Member::currentUser();
+            $member = Security::getCurrentUser();
         }
         $extended = $this->extendedCan(__FUNCTION__, $member);
         if ($extended !== null) {
@@ -354,7 +354,7 @@ class CalendarDateTime extends DataObject
     public function canDelete($member = null)
     {
         if (!$member) {
-            $member = Member::currentUser();
+            $member = Security::getCurrentUser();
         }
         $extended = $this->extendedCan(__FUNCTION__, $member);
         if ($extended !== null) {
@@ -369,7 +369,7 @@ class CalendarDateTime extends DataObject
     public function canView($member = null)
     {
         if (!$member) {
-            $member = Member::currentUser();
+            $member = Security::getCurrentUser();
         }
         $extended = $this->extendedCan(__FUNCTION__, $member);
         if ($extended !== null) {
