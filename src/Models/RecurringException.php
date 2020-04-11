@@ -25,11 +25,11 @@ class RecurringException extends DataObject
     private static $singular_name = 'Recurring exception';
 
     private static $plural_name = 'Recurring exceptions';
-    
+
     private static $db = [
         'ExceptionDate' => 'Date'
     ];
-    
+
     private static $has_one = [
         'CalendarEvent' => CalendarEvent::class
     ];
@@ -70,18 +70,18 @@ class RecurringException extends DataObject
     {
         return Permission::check("CMS_ACCESS_CMSMain");
     }
-    
+
     public function canEdit($member = null)
     {
         return Permission::check("CMS_ACCESS_CMSMain");
     }
-    
+
     public function canDelete($member = null)
     {
         return Permission::check("CMS_ACCESS_CMSMain");
     }
-    
-    public function canView($member = null, $context = [])
+
+    public function canView($member = null)
     {
         return Permission::check("CMS_ACCESS_CMSMain");
     }
