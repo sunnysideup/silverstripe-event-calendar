@@ -19,9 +19,9 @@ class CalendarAnnouncement extends CalendarDateTime
 {
     private static $table_name = 'UncleCheese_CalendarAnnouncement';
 
-    private static $singular_name = 'Calendar accouncement';
+    private static $singular_name = 'Calendar announcement';
 
-    private static $plural_name = 'Calendar accouncements';
+    private static $plural_name = 'Calendar announcements';
 
     private static $db = [
         'Title' => 'Varchar(255)',
@@ -62,7 +62,7 @@ class CalendarAnnouncement extends CalendarDateTime
             'FormattedAllDay' => _t(Calendar::class.'.ALLDAY', 'All day'),
         ];
     }
-    
+
     public function getTitle()
     {
         return $this->getField('Title');
