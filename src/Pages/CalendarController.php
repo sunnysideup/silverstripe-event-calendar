@@ -556,8 +556,8 @@ class CalendarController extends PageController
      */
     public function PreviousWeekLink()
     {
-        $start = Carbon::parse($this->startDate)->subtractWeek();
-        $end = Carbon::parse($this->endDate)->subtractWeek();
+        $start = Carbon::parse($this->startDate)->subWeek();
+        $end = Carbon::parse($this->endDate)->subWeek();
         return $this->getRangeLink($start, $end);
     }
 
