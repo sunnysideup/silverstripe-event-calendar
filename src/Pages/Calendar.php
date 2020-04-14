@@ -82,7 +82,7 @@ class Calendar extends Page
     /**
      * @var int
      */
-    private static $reccurring_event_index = 0;
+    private static $recurring_event_index = 0;
 
     /**
      * @var int
@@ -561,8 +561,8 @@ class Calendar extends Page
         $e->StartDate = $startDate;
         $e->EndDate = $startDate;
         $e->$relation = $recurringEventDatetime->$relation;
-        $e->ID = "recurring" . self::$reccurring_event_index;
-        self::$reccurring_event_index++;
+        $e->ID = "recurring" . self::$recurring_event_index;
+        self::$recurring_event_index++;
         return $e;
     }
 

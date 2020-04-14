@@ -1,6 +1,6 @@
 /**
  * An Array of day names starting with Sunday.
- * 
+ *
  * @example dayNames[0]
  * @result 'Sunday'
  *
@@ -12,7 +12,7 @@ Date.dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday
 
 /**
  * An Array of abbreviated day names starting with Sun.
- * 
+ *
  * @example abbrDayNames[0]
  * @result 'Sun'
  *
@@ -23,8 +23,8 @@ Date.dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday
 Date.abbrDayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 /**
- * An Array of month names starting with Janurary.
- * 
+ * An Array of month names starting with January.
+ *
  * @example monthNames[0]
  * @result 'January'
  *
@@ -36,7 +36,7 @@ Date.monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July
 
 /**
  * An Array of abbreviated month names starting with Jan.
- * 
+ *
  * @example abbrMonthNames[0]
  * @result 'Jan'
  *
