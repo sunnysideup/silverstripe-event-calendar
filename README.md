@@ -45,4 +45,9 @@ UncleCheese\EventCalendar\Pages\Calendar:
     language: EN
 ```
 
+Disable automatic link to RSS appearing
 
+```yaml
+UncleCheese\EventCalendar\Pages\Calendar:
+    include_rss_link: false
+```

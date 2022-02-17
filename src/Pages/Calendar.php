@@ -132,6 +132,11 @@ class Calendar extends Page
     /**
      * @var bool
      */
+    private static $include_rss_link = true;
+
+    /**
+     * @var bool
+     */
     private static $caching_enabled = false;
 
     protected $eventClass_cache;
