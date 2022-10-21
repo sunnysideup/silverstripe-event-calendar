@@ -91,7 +91,8 @@ class CalendarEvent extends Page
                         'Location',
                         _t(Calendar::class.'.LOCATIONDESCRIPTION', 'The location for this event')
                     )
-                    ->setDescription('Try to use a location that Google Maps can find!'),
+                        ->setDescription('Try to use a location that Google Maps can find!'),
+                    DropdownField::create('RegionID', 'Region', Region::get()->map())
                 ],
                 'Content'
             );
