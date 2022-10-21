@@ -84,12 +84,15 @@ class CalendarEvent extends Page
             Requirements::javascript('sunnysideup/silverstripe-event-calendar:client/dist/js/calendar_cms.js');
             Requirements::css('sunnysideup/silverstripe-event-calendar:client/dist/css/calendar_cms.css');
 
-            $f->addFieldToTab(
+            $f->addFieldsToTab(
                 "Root.Main",
-                TextField::create(
-                    'Location',
-                    _t(Calendar::class.'.LOCATIONDESCRIPTION', 'The location for this event')
-                ),
+                [
+                    TextField::create(
+                        'Location',
+                        _t(Calendar::class.'.LOCATIONDESCRIPTION', 'The location for this event')
+                    )
+                    ->setDescription('Try to use a location that Google Maps can find!'),
+                ],
                 'Content'
             );
 
