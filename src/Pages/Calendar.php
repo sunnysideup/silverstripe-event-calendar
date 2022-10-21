@@ -75,7 +75,7 @@ class Calendar extends Page
         'DefaultView'			=> 'upcoming'
     ];
 
-    private static $icon = "mattclegg/silverstripe-event-calendar:client/dist/images/calendar-file.gif";
+    private static $icon = "sunnysideup/silverstripe-event-calendar:client/dist/images/calendar-file.gif";
 
     private static $description = "A collection of calendar events";
 
@@ -167,7 +167,7 @@ class Calendar extends Page
         $self = $this;
 
         $this->beforeUpdateCMSFields(function ($f) use ($self) {
-            Requirements::javascript('mattclegg/silverstripe-event-calendar:client/dist/js/calendar_cms.js');
+            Requirements::javascript('sunnysideup/silverstripe-event-calendar:client/dist/js/calendar_cms.js');
 
             $configuration = _t(__CLASS__.'.CONFIGURATION', 'Configuration');
             $f->addFieldsToTab(

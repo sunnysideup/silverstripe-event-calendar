@@ -76,13 +76,13 @@ class CalendarController extends PageController
             RSSFeed::linkToFeed($this->Link() . "rss", $this->RSSTitle ? $this->RSSTitle : $this->Title);
         }
         if (Calendar::config()->include_default_css) {
-            Requirements::css('mattclegg/silverstripe-event-calendar:client/dist/css/calendar.css');
+            Requirements::css('sunnysideup/silverstripe-event-calendar:client/dist/css/calendar.css');
         }
         if (Calendar::config()->include_calendar_js) {
             if (!Calendar::config()->jquery_included) {
                 Requirements::javascript('silverstripe/admin:thirdparty/jquery/jquery.min.js');
             }
-            Requirements::javascript('mattclegg/silverstripe-event-calendar:client/dist/js/calendar.js');
+            Requirements::javascript('sunnysideup/silverstripe-event-calendar:client/dist/js/calendar.js');
         }
     }
 

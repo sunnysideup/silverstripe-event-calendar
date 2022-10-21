@@ -21,7 +21,7 @@ class CalendarEventController extends PageController
     {
         parent::init();
         if (Calendar::config()->include_default_css) {
-            Requirements::css('mattclegg/silverstripe-event-calendar:client/dist/css/calendar.css');
+            Requirements::css('sunnysideup/silverstripe-event-calendar:client/dist/css/calendar.css');
         }
     }
 

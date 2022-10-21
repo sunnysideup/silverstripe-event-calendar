@@ -6,7 +6,7 @@ sk:
     ANNOUNCEMENTDESCRIPTION: 'Oznámenia sú jednoduché záznamy bez stránky s podrobnosťami, ktoré môžete pridať do kalendára (napr. "Kancelária zatvorená)"'
     Announcements: 'Oznámenia'
     CONFIGURATION: 'Konfigurácia'
-    DATEJSFILE: 'mattclegg/silverstripe-event-calendar:client/dist/js/lang/calendar_sk.js'
+    DATEJSFILE: 'sunnysideup/silverstripe-event-calendar:client/dist/js/lang/calendar_sk.js'
     DATETIMEDESCRIPTION: 'Pridať termíny pre túto udalosť'
     DEFAULTDATEHEADER: 'Predvolený titulok (zobrazuje sa keď nie je vybraté žiadne časové obdobie)'
     DEFAULTFUTUREMONTHS: 'Maximálny počet budúcich mesiacov na predvolenom zobrazení'

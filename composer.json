@@ -23,7 +23,7 @@
 		"nesbot/carbon": "1.39.1"
 	},
 	"support": {
-		"issues": "https://github.com/mattclegg/silverstripe-event-calendar/issues"
+		"issues": "https://github.com/sunnysideup/silverstripe-event-calendar/issues"
 	},
 	"extra": {
 		"expose": [
@@ -35,5 +35,10 @@
 		"unclecheese/event-calendar": "*"
 	},
 	"minimum-stability": "dev",
-	"prefer-stable": true
+	"prefer-stable": true,
+    "autoload": {
+        "psr-4": {
+            "UncleCheese\\EventCalendar\\": "src/"
+        }
+    }
 }

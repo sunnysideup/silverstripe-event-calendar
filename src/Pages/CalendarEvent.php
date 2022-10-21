@@ -64,7 +64,7 @@ class CalendarEvent extends Page
         'RecurringDaysOfMonth'	=> RecurringDayOfMonth::class
     ];
 
-    private static $icon = "mattclegg/silverstripe-event-calendar:client/dist/images/event-file.gif";
+    private static $icon = "sunnysideup/silverstripe-event-calendar:client/dist/images/event-file.gif";
 
     private static $description = "An individual event entry";
 
@@ -77,8 +77,8 @@ class CalendarEvent extends Page
         $self = $this;
 
         $this->beforeUpdateCMSFields(function ($f) use ($self) {
-            Requirements::javascript('mattclegg/silverstripe-event-calendar:client/dist/js/calendar_cms.js');
-            Requirements::css('mattclegg/silverstripe-event-calendar:client/dist/css/calendar_cms.css');
+            Requirements::javascript('sunnysideup/silverstripe-event-calendar:client/dist/js/calendar_cms.js');
+            Requirements::css('sunnysideup/silverstripe-event-calendar:client/dist/css/calendar_cms.css');
 
             $f->addFieldToTab(
                 "Root.Main",
