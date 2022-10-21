@@ -11,7 +11,7 @@
 namespace UncleCheese\EventCalendar\Pages;
 
 use SilverStripe\Forms\CheckboxField;
-use SilverStripe\Forms\CheckboxsetField;
+use SilverStripe\Forms\CheckboxSetField;
 use SilverStripe\Forms\DropdownField;
 use SilverStripe\Forms\FieldGroup;
 use SilverStripe\Forms\LabelField;
@@ -56,7 +56,6 @@ class CalendarEvent extends Page
     ];
 
     private static $has_one = [
-        'Region'		=> Region::class,
     ];
     private static $has_many = [
         'DateTimes'		=> CalendarDateTime::class,
@@ -64,6 +63,7 @@ class CalendarEvent extends Page
     ];
 
     private static $many_many = [
+        'Regions'		=> Region::class,
         'RecurringDaysOfWeek'	=> RecurringDayOfWeek::class,
         'RecurringDaysOfMonth'	=> RecurringDayOfMonth::class
     ];
@@ -91,7 +91,8 @@ class CalendarEvent extends Page
                         'Location',
                         _t(Calendar::class.'.LOCATIONDESCRIPTION', 'The location for this event')
                     )
-                    ->setDescription('Try to use a location that Google Maps can find!'),
+                        ->setDescription('Try to use a location that Google Maps can find!'),
+                    CheckboxSetField::create('Regions', 'Regions', Region::get()->map())
                 ],
                 'Content'
             );

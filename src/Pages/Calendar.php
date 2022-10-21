@@ -16,7 +16,7 @@ use SilverStripe\CMS\Model\SiteTree;
 use SilverStripe\Control\Controller;
 use SilverStripe\Core\Config\Config;
 use SilverStripe\Core\Injector\Injector;
-use SilverStripe\Forms\CheckboxsetField;
+use SilverStripe\Forms\CheckboxSetField;
 use SilverStripe\Forms\DropdownField;
 use SilverStripe\Forms\NumericField;
 use SilverStripe\Forms\TextField;
@@ -27,6 +27,7 @@ use SilverStripe\Forms\GridField\GridFieldConfig_RecordEditor;
 use SilverStripe\View\Requirements;
 use UncleCheese\EventCalendar\Models\CachedCalendarEntry;
 use UncleCheese\EventCalendar\Models\CalendarAnnouncement;
+use UncleCheese\EventCalendar\Models\Region;
 use UncleCheese\EventCalendar\Models\ICSFeed;
 use UncleCheese\EventCalendar\Pages\CalendarController;
 use UncleCheese\EventCalendar\Pages\CalendarEvent;
@@ -223,7 +224,7 @@ class Calendar extends Page
             if ($otherCals->exists()) {
                 $f->addFieldToTab(
                     "Root.$feeds",
-                    CheckboxsetField::create(
+                    CheckboxSetField::create(
                         'NestedCalendars',
                         _t(__CLASS__.'.NESTEDCALENDARS', 'Include events from these calendars'),
                         $otherCals->map('ID', 'Link')
@@ -235,7 +236,17 @@ class Calendar extends Page
                 TextField::create('RSSTitle', _t(__CLASS__.'.RSSTITLE', 'Title of RSS feed')),
                 'Content'
             );
+            $f->addFieldsToTab(
+                'Root.RegionList',
+                GridField::create(
+                    'Regions',
+                    'Edit Regions',
+                    Region::get(),
+                    GridFieldConfig_RecordEditor::create()
+                )
+            );
         });
+
 
         return $f = parent::getCMSFields();
     }
@@ -277,17 +288,18 @@ class Calendar extends Page
     /**
      * @return string
      */
-    public function getDateToEventRelation()
+    public function getDateToEventRelation() : string
     {
         if ($this->dateToEventRelation_cache) {
-            return $this->dateToEventRelation_cache;
+            return (string) $this->dateToEventRelation_cache;
         }
         $dateTime = Injector::inst()->get($this->getDateTimeClass());
         foreach ($dateTime->config()->has_one as $rel => $class) {
             if ($class == $this->getEventClass()) {
-                return $this->dateToEventRelation_cache = $rel.'ID';
+                return (string) $this->dateToEventRelation_cache = $rel.'ID';
             }
         }
+        return '';
     }
 
     /**
@@ -646,6 +658,18 @@ class Calendar extends Page
         $calendars->push($this);
         $calendars->merge($this->NestedCalendars());
         return $calendars;
+    }
+
+    public function RegionsWithEvents()
+    {
+        $list = Region::get();
+        foreach($list as $region) {
+            $ids = [];
+            if($region->HasEvents()) {
+                $ids[] = $region->ID;
+            }
+        }
+        return $list->filter(['ID' => $ids]);
     }
 
     /**
