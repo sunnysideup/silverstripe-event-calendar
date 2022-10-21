@@ -1,5 +1,5 @@
 {
-	"name":"mattclegg/silverstripe-event-calendar",
+	"name":"sunnysideup/silverstripe-event-calendar",
 	"type": "silverstripe-vendormodule",
 	"description": "Event calendar for the Silverstripe CMS",
 	"keywords": [
