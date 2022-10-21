@@ -663,10 +663,10 @@ class Calendar extends Page
     public function RegionsWithEvents()
     {
         $list = Region::get();
+        $ids = [-1 => 0];
         foreach($list as $region) {
-            $ids = [-1 => 0];
             if($region->HasEvents()) {
-                $ids[] = $region->ID;
+                $ids[$region->ID] = $region->ID;
             }
         }
         return $list->filter(['ID' => $ids]);

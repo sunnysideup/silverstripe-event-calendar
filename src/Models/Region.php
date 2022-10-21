@@ -38,19 +38,24 @@ class Region extends DataObject
         }
     }
 
+    protected static $upcoming_events = null;
+
     public function HasEvents() : bool
     {
-        $list = DataObject::get_one(Calendar::class)->UpcomingEvents(999999);
-        if($list->exists()) {
-            return $list->filter(['Regions.ID' => $this->ID])->exists();
-        } else {
-            return false;
+        if(self::$upcoming_events === null) {
+            self::$upcoming_events = DataObject::get_one(Calendar::class)->UpcomingEvents(9999);
         }
+        if(self::$upcoming_events->exists()) {
+            $myEvents = $this->CalendarEvents()->columnUnique('ID');
+            $allEvents = self::$upcoming_events->columnUnique('EventID');
+            return ! empty(array_intersect($myEvents, $allEvents));
+        }
+        return false;
     }
 
     public function Link()
     {
-        return DataObject::get(MemberProfilePage::class)->Link();
+        return DataObject::get_one(Calendar::class)->Link('region/'.$this->Title);
     }
 
 }

@@ -21,8 +21,9 @@ use SilverStripe\ORM\FieldType\DBField;
 use SilverStripe\Security\Security;
 use SilverStripe\Security\Permission;
 use UncleCheese\EventCalendar\Helpers\CalendarUtil;
-use UncleCheese\EventCalendar\Model\CalendarAnnouncement;
 use UncleCheese\EventCalendar\Pages\CalendarEvent;
+
+use UncleCheese\EventCalendar\Models\CalendarAnnouncement;
 
 class CalendarDateTime extends DataObject
 {

@@ -159,9 +159,10 @@ class CalendarController extends PageController
 
     public function region(HTTPRequest $r)
     {
-        $filter = ['Title' => Convert::raw2sql($this->param('ID'))];
+        $regionTitle = urldecode(Convert::raw2sql($r->param('ID')));
+        $filter = ['Title' => $regionTitle];
         $this->region = Region::get()->filter($filter)->first();
-        $this->setDefaultView();
+        $this->setRegionView();
         return $this->respond();
     }
 
@@ -264,6 +265,13 @@ class CalendarController extends PageController
     public function setDefaultView()
     {
         $this->view = 'default';
+        $this->startDate = Carbon::now();
+        $this->endDate = Carbon::now()->addMonths($this->DefaultFutureMonths);
+    }
+
+    public function setRegionView()
+    {
+        $this->view = 'region';
         $this->startDate = Carbon::now();
         $this->endDate = Carbon::now()->addMonths($this->DefaultFutureMonths);
     }
@@ -441,11 +449,14 @@ class CalendarController extends PageController
             return;
         }
         $this->startDate = Carbon::parse(CalendarUtil::get_date_from_string($r->param('ID')));
+        $d = clone $this->startDate;
         if ($r->param('OtherID')) {
             $this->view = "range";
             $this->endDate = Carbon::parse(CalendarUtil::get_date_from_string($r->param('OtherID')));
+        } elseif($r->param('Action') === 'region') {
+            $this->view = "region";
+            $this->endDate = Carbon::parse($d->addMonths($this->DefaultFutureMonths)->toDateString());
         } else {
-            $d = clone $this->startDate;
             switch (strlen(str_replace("-", "", $r->param('ID')))) {
                 case 8:
                     $this->view = "day";
@@ -498,9 +509,9 @@ class CalendarController extends PageController
         $this->MoreEvents = ($next < $allEventsCount);
         $this->MoreLink = HTTP::setGetVar("start", $next);
 
-        $region = $this->getRequest()->getVar('r');
-        if($region) {
-            $list = $list->filter(['RegionID' => intval($region)]);
+        if($this->region) {
+            $eventIds = [-1 => 0] + $this->region->CalendarEvents()->columnUnique('ID');
+            $list = $list->filter(['EventID' => $eventIds]);
         }
 
         return $list;
@@ -512,6 +523,9 @@ class CalendarController extends PageController
     public function DateHeader()
     {
         switch ($this->view) {
+            case 'region':
+                return $this->region->Title;
+                break;
             case "day":
                 return CalendarUtil::localize(
                     $this->startDate->getTimestamp(),

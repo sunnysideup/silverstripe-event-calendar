@@ -92,11 +92,7 @@ class CalendarEvent extends Page
                         _t(Calendar::class.'.LOCATIONDESCRIPTION', 'The location for this event')
                     )
                         ->setDescription('Try to use a location that Google Maps can find!'),
-<<<<<<< HEAD
                     CheckboxSetField::create('Regions', 'Regions', Region::get()->map())
-=======
-                    DropdownField::create('RegionID', 'Region', Region::get()->map())
->>>>>>> a9a49241f3cfd0eb4ffdacfe79a1a037380d9e8a
                 ],
                 'Content'
             );
