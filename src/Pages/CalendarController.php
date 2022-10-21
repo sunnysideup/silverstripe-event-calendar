@@ -14,6 +14,8 @@ use Carbon\Carbon;
 use UncleCheese\EventCalendar\Helpers\CalendarUtil;
 use UncleCheese\EventCalendar\Pages\Calendar;
 use UncleCheese\EventCalendar\Helpers\ICSWriter;
+
+use UncleCheese\EventCalendar\Models\Region;
 use SilverStripe\Control\Controller;
 use SilverStripe\Control\Director;
 use SilverStripe\Control\Email\Email;
@@ -40,6 +42,7 @@ class CalendarController extends PageController
 {
     private static $allowed_actions = [
         'show',
+        'region',
         'month',
         'year',
         'rss',
@@ -68,6 +71,11 @@ class CalendarController extends PageController
      * @var Carbon
      */
     protected $endDate;
+
+    /**
+     * @var string
+     */
+    protected $region;
 
     public function init()
     {
@@ -146,6 +154,14 @@ class CalendarController extends PageController
     public function month(HTTPRequest $r)
     {
         $this->setMonthView();
+        return $this->respond();
+    }
+
+    public function region(HTTPRequest $r)
+    {
+        $filter = ['Title' => Convert::raw2sql($this->param('ID'))];
+        $this->region = Region::get()->filter($filter)->first();
+        $this->setDefaultView();
         return $this->respond();
     }
 
@@ -269,6 +285,7 @@ class CalendarController extends PageController
             $this->endDate = $this->endDate->tomorrow();
         }
     }
+
 
     public function setWeekendView()
     {
@@ -412,7 +429,7 @@ class CalendarController extends PageController
             return $result;
         }
 
-        $this->redirectBack();
+        return $this->redirectBack();
     }
 
     /**
@@ -480,6 +497,11 @@ class CalendarController extends PageController
         $next = $this->getOffset() + $this->EventsPerPage;
         $this->MoreEvents = ($next < $allEventsCount);
         $this->MoreLink = HTTP::setGetVar("start", $next);
+
+        $region = $this->getRequest()->getVar('r');
+        if($region) {
+            $list = $list->filter(['RegionID' => intval($region)]);
+        }
 
         return $list;
     }
@@ -635,6 +657,7 @@ class CalendarController extends PageController
                     ($this->startDate->format('w') == Carbon::FRIDAY)
                     && ($this->endDate->format('w') == Carbon::SUNDAY);
         }
+        return false;
     }
 
     /**

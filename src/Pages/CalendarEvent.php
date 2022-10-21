@@ -22,6 +22,7 @@ use SilverStripe\Forms\GridField\GridField;
 use SilverStripe\Forms\GridField\GridFieldConfig_RecordEditor;
 use SilverStripe\View\Requirements;
 use UncleCheese\EventCalendar\Helpers\RecursionReader;
+use UncleCheese\EventCalendar\Models\Region;
 use UncleCheese\EventCalendar\Models\CalendarDateTime;
 use UncleCheese\EventCalendar\Models\RecurringDayOfMonth;
 use UncleCheese\EventCalendar\Models\RecurringDayOfWeek;
@@ -54,6 +55,9 @@ class CalendarEvent extends Page
         'MonthlyDayOfWeek' => 'Int'
     ];
 
+    private static $has_one = [
+        'Region'		=> Region::class,
+    ];
     private static $has_many = [
         'DateTimes'		=> CalendarDateTime::class,
         'Exceptions'	=> RecurringException::class
