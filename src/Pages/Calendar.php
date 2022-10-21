@@ -664,7 +664,7 @@ class Calendar extends Page
     {
         $list = Region::get();
         foreach($list as $region) {
-            $ids = [];
+            $ids = [-1 => 0];
             if($region->HasEvents()) {
                 $ids[] = $region->ID;
             }
