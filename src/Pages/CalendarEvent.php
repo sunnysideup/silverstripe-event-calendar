@@ -21,6 +21,8 @@ use SilverStripe\Forms\TextField;
 use SilverStripe\Forms\GridField\GridField;
 use SilverStripe\Forms\GridField\GridFieldConfig_RecordEditor;
 use SilverStripe\View\Requirements;
+
+use SilverStripe\Assets\Shortcodes\ImageShortcodeProvider;
 use UncleCheese\EventCalendar\Helpers\RecursionReader;
 use UncleCheese\EventCalendar\Models\Region;
 use UncleCheese\EventCalendar\Models\CalendarDateTime;
@@ -28,6 +30,9 @@ use UncleCheese\EventCalendar\Models\RecurringDayOfMonth;
 use UncleCheese\EventCalendar\Models\RecurringDayOfWeek;
 use UncleCheese\EventCalendar\Models\RecurringException;
 use UncleCheese\EventCalendar\Pages\Calendar;
+use SilverStripe\Assets\Image;
+
+use SilverStripe\AssetAdmin\Forms\UploadField;
 use \Page;
 
 class CalendarEvent extends Page
@@ -56,6 +61,10 @@ class CalendarEvent extends Page
     ];
 
     private static $has_one = [
+        'EventImage' => Image::class,
+    ];
+    private static $owns = [
+        'EventImage',
     ];
     private static $has_many = [
         'DateTimes'		=> CalendarDateTime::class,
@@ -92,7 +101,10 @@ class CalendarEvent extends Page
                         _t(Calendar::class.'.LOCATIONDESCRIPTION', 'The location for this event')
                     )
                         ->setDescription('Try to use a location that Google Maps can find!'),
-                    CheckboxSetField::create('Regions', 'Regions', Region::get()->map())
+                    CheckboxSetField::create('Regions', 'Regions', Region::get()->map()),
+                    UploadField::create(
+                        'EventImage'
+                    )
                 ],
                 'Content'
             );
