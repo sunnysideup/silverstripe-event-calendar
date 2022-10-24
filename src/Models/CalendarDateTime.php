@@ -48,7 +48,7 @@ class CalendarDateTime extends DataObject
     /**
      * @var string
      */
-    private static $date_format_override;
+    private static $date_format_override ='dmy';
 
     /**
      * @var string
