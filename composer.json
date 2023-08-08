@@ -19,8 +19,8 @@
 	],
 	"require": {
 		"silverstripe/cms": "^4.0 || ^5.0",
-		"johngrogg/ics-parser": "^2",
-		"nesbot/carbon": "1.39.1"
+		"johngrogg/ics-parser": "*",
+		"nesbot/carbon": "*"
 	},
 	"support": {
 		"issues": "https://github.com/sunnysideup/silverstripe-event-calendar/issues"
