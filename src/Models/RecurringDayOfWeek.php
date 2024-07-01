@@ -26,13 +26,13 @@ class RecurringDayOfWeek extends DataObject
     private static $db = [
         'Value' => 'Int'
     ];
-    
+
     private static $belongs_many_many = [
         'CalendarEvent' => CalendarEvent::class
     ];
 
     private static $default_sort = "Value ASC";
-    
+
     /**
      * Add week recurrence records
      *
@@ -61,27 +61,29 @@ class RecurringDayOfWeek extends DataObject
         }
     }
 
-    public function getTitle()
+    public function getTitle(): string
     {
-        return strftime("%a", Carbon::now()->next($this->Value)->getTimestamp());
+        $dateTime = Carbon::now()->next($this->Value);
+        return $dateTime->format('D');
     }
-    
+
+
 
     public function canCreate($member = null, $context = [])
     {
         return Permission::check("CMS_ACCESS_CMSMain");
     }
-    
+
     public function canEdit($member = null)
     {
         return Permission::check("CMS_ACCESS_CMSMain");
     }
-    
+
     public function canDelete($member = null)
     {
         return Permission::check("CMS_ACCESS_CMSMain");
     }
-    
+
     public function canView($member = null)
     {
         return Permission::check("CMS_ACCESS_CMSMain");

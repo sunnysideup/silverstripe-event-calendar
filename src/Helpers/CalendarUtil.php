@@ -48,6 +48,10 @@ class CalendarUtil
     /**
      * @return array
      */
+    public static function format_character_replacements(int $start, int $end): array
+    {
+        return self::formatCharacterReplacements($start, $end);
+    }
     public static function formatCharacterReplacements(int $start, int $end): array
     {
         $startDateTime = new DateTime('@' . $start);
