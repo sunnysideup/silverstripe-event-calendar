@@ -24,7 +24,15 @@ class iCal
      
     public function iCalClean($file)
     {
-        return strpos($file, '.ics');
+
+/**
+  * ### @@@@ START REPLACEMENT @@@@ ###
+  * WHY: automated upgrade
+  * OLD: strpos($
+  * EXP: SS5 change
+  * ### @@@@ STOP REPLACEMENT @@@@ ###
+  */
+        return strpos((string) $file, '.ics');
     }
      
     public function iCalReader()

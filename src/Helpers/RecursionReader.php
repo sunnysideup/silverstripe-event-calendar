@@ -69,7 +69,15 @@ class RecursionReader
         if ($datetime = DataList::create($this->datetimeClass)
             ->filter($relation, $event->ID)->first()
         ) {
-            $this->ts = strtotime($datetime->StartDate);
+
+/**
+  * ### @@@@ START REPLACEMENT @@@@ ###
+  * WHY: automated upgrade
+  * OLD: strtotime($
+  * EXP: SS5 change
+  * ### @@@@ STOP REPLACEMENT @@@@ ###
+  */
+            $this->ts = strtotime((string) $datetime->StartDate);
         }
 
         if ($event->CustomRecursionType == CalendarEvent::RECUR_INTERVAL_WEEKLY) {

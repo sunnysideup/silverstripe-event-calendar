@@ -43,6 +43,15 @@ class RecurringException extends DataObject
             DateField::create('ExceptionDate', _t(__CLASS__.'.EXCEPTIONDATE', 'Exception date'))
         );
 
+
+/**
+  * ### @@@@ START REPLACEMENT @@@@ ###
+  * WHY: automated upgrade
+  * OLD: ->extend(
+  * NEW: ->extend( ...  (COMPLEX)
+  * EXP: Changed parameter name in ... SilverStripe\Core\Extensible::extend() from $a1 to $arguments and modified it to accept variable arguments using the splat operator
+  * ### @@@@ STOP REPLACEMENT @@@@ ###
+  */
         $this->extend('updateCMSFields', $fields);
 
         return $fields;

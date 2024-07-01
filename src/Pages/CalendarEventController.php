@@ -40,6 +40,15 @@ class CalendarEventController extends PageController
     {
         return DataList::create($this->data()->getDateTimeClass())
             ->filter("EventID", $this->ID)
+
+/**
+  * ### @@@@ START REPLACEMENT @@@@ ###
+  * WHY: automated upgrade
+  * OLD: ->sort(
+  * NEW: ->sort( ...  (COMPLEX)
+  * EXP: This method no longer accepts raw sql, only known field names.  If you have raw SQL then use ->orderBy
+  * ### @@@@ STOP REPLACEMENT @@@@ ###
+  */
             ->sort("StartDate ASC");
     }
 
@@ -64,8 +73,24 @@ class CalendarEventController extends PageController
                 return false;
             }
             $date = $dateObj->StartDate;
-        } elseif (strtotime($_REQUEST['date']) > 0) {
-            $date = date('Y-m-d', strtotime($_REQUEST['date']));
+
+/**
+  * ### @@@@ START REPLACEMENT @@@@ ###
+  * WHY: automated upgrade
+  * OLD: strtotime($
+  * EXP: SS5 change
+  * ### @@@@ STOP REPLACEMENT @@@@ ###
+  */
+        } elseif (strtotime((string) $_REQUEST['date']) > 0) {
+
+/**
+  * ### @@@@ START REPLACEMENT @@@@ ###
+  * WHY: automated upgrade
+  * OLD: strtotime($
+  * EXP: SS5 change
+  * ### @@@@ STOP REPLACEMENT @@@@ ###
+  */
+            $date = date('Y-m-d', strtotime((string) $_REQUEST['date']));
         }
 
         $cal = $this->Parent();
@@ -90,13 +115,38 @@ class CalendarEventController extends PageController
     {
         $allDates = DataList::create($this->data()->getDateTimeClass())
             ->filter("EventID", $this->ID)
+
+/**
+  * ### @@@@ START REPLACEMENT @@@@ ###
+  * WHY: automated upgrade
+  * OLD: ->sort(
+  * NEW: ->sort( ...  (COMPLEX)
+  * EXP: This method no longer accepts raw sql, only known field names.  If you have raw SQL then use ->orderBy
+  * ### @@@@ STOP REPLACEMENT @@@@ ###
+  */
             ->sort("StartDate ASC");
         if (!isset($_REQUEST['date'])) {
             // If no date filter specified, return the first one
             return $allDates->first();
         }
-        if (strtotime($_REQUEST['date']) > 0) {
-            $date = date('Y-m-d', strtotime($_REQUEST['date']));
+
+/**
+  * ### @@@@ START REPLACEMENT @@@@ ###
+  * WHY: automated upgrade
+  * OLD: strtotime($
+  * EXP: SS5 change
+  * ### @@@@ STOP REPLACEMENT @@@@ ###
+  */
+        if (strtotime((string) $_REQUEST['date']) > 0) {
+
+/**
+  * ### @@@@ START REPLACEMENT @@@@ ###
+  * WHY: automated upgrade
+  * OLD: strtotime($
+  * EXP: SS5 change
+  * ### @@@@ STOP REPLACEMENT @@@@ ###
+  */
+            $date = date('Y-m-d', strtotime((string) $_REQUEST['date']));
             if ($this->Recursion) {
                 $datetime = $allDates->first();
                 if ($datetime) {

@@ -101,14 +101,22 @@ class CalendarUtil
     {
         $str = str_replace('-', '', $str);
         if (is_numeric($str)) {
-            $missing = (8 - strlen($str));
+            $missing = (8 - strlen((string) $str));
             if ($missing > 0) {
                 while ($missing > 0) {
                     $str .= "01";
                     $missing -= 2;
                 }
             }
-            return substr($str, 0, 4) . "-" . substr($str, 4, 2) . "-" . substr($str, 6, 2);
+
+/**
+  * ### @@@@ START REPLACEMENT @@@@ ###
+  * WHY: automated upgrade
+  * OLD: substr($
+  * EXP: SS5 change
+  * ### @@@@ STOP REPLACEMENT @@@@ ###
+  */
+            return substr((string) $str, 0, 4) . "-" . substr((string) $str, 4, 2) . "-" . substr((string) $str, 6, 2);
         }
         
         return date('Y-m-d');
@@ -122,8 +130,24 @@ class CalendarUtil
         $strStartDate = null;
         $strEndDate = null;
         
-        $start = strtotime($startDate);
-        $end = strtotime($endDate);
+
+/**
+  * ### @@@@ START REPLACEMENT @@@@ ###
+  * WHY: automated upgrade
+  * OLD: strtotime($
+  * EXP: SS5 change
+  * ### @@@@ STOP REPLACEMENT @@@@ ###
+  */
+        $start = strtotime((string) $startDate);
+
+/**
+  * ### @@@@ START REPLACEMENT @@@@ ###
+  * WHY: automated upgrade
+  * OLD: strtotime($
+  * EXP: SS5 change
+  * ### @@@@ STOP REPLACEMENT @@@@ ###
+  */
+        $end = strtotime((string) $endDate);
         
         $startYear = date("Y", $start);
         $startMonth = date("m", $start);
@@ -145,10 +169,34 @@ class CalendarUtil
             $key = self::DIFF_MONTH_DIFF_YEAR;
         }
         $dateString = self::localize($start, $end, $key);
-        $break = strpos($dateString, '$End');
+
+/**
+  * ### @@@@ START REPLACEMENT @@@@ ###
+  * WHY: automated upgrade
+  * OLD: strpos($
+  * EXP: SS5 change
+  * ### @@@@ STOP REPLACEMENT @@@@ ###
+  */
+        $break = strpos((string) $dateString, '$End');
         if ($break !== false) {
-            $strStartDate = substr($dateString, 0, $break);
-            $strEndDate = substr($dateString, $break+1, strlen($dateString) - strlen($strStartDate));
+
+/**
+  * ### @@@@ START REPLACEMENT @@@@ ###
+  * WHY: automated upgrade
+  * OLD: substr($
+  * EXP: SS5 change
+  * ### @@@@ STOP REPLACEMENT @@@@ ###
+  */
+            $strStartDate = substr((string) $dateString, 0, $break);
+
+/**
+  * ### @@@@ START REPLACEMENT @@@@ ###
+  * WHY: automated upgrade
+  * OLD: substr($
+  * EXP: SS5 change
+  * ### @@@@ STOP REPLACEMENT @@@@ ###
+  */
+            $strEndDate = substr((string) $dateString, $break+1, strlen((string) $dateString) - strlen((string) $strStartDate));
             return [$strStartDate, $strEndDate];
         }
 
@@ -163,7 +211,15 @@ class CalendarUtil
         if (!$date) {
             return "";
         }
-        $ts = strtotime($date . " " . $time);
+
+/**
+  * ### @@@@ START REPLACEMENT @@@@ ###
+  * WHY: automated upgrade
+  * OLD: strtotime($
+  * EXP: SS5 change
+  * ### @@@@ STOP REPLACEMENT @@@@ ###
+  */
+        $ts = strtotime((string) $date . " " . $time);
         if ($ts < 1) {
             return "";
         }
@@ -240,11 +296,27 @@ class CalendarUtil
         if ($a->StartDate == $b->StartDate) {
             if ($a->StartTime == $b->StartTime) {
                 return 0;
-            } elseif (strtotime($a->StartTime) > strtotime($b->StartTime)) {
+
+/**
+  * ### @@@@ START REPLACEMENT @@@@ ###
+  * WHY: automated upgrade
+  * OLD: strtotime($
+  * EXP: SS5 change
+  * ### @@@@ STOP REPLACEMENT @@@@ ###
+  */
+            } elseif (strtotime((string) $a->StartTime) > strtotime((string) $b->StartTime)) {
                 return 1;
             }
             return -1;
-        } elseif (strtotime($a->StartDate) > strtotime($b->StartDate)) {
+
+/**
+  * ### @@@@ START REPLACEMENT @@@@ ###
+  * WHY: automated upgrade
+  * OLD: strtotime($
+  * EXP: SS5 change
+  * ### @@@@ STOP REPLACEMENT @@@@ ###
+  */
+        } elseif (strtotime((string) $a->StartDate) > strtotime((string) $b->StartDate)) {
             return 1;
         }
         return -1;

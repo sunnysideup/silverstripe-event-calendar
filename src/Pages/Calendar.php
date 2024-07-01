@@ -319,6 +319,15 @@ class Calendar extends Page
                     "EndDate:GreaterThan" => $start
                 ]
             )
+
+/**
+  * ### @@@@ START REPLACEMENT @@@@ ###
+  * WHY: automated upgrade
+  * OLD: ->sort(
+  * NEW: ->sort( ...  (COMPLEX)
+  * EXP: This method no longer accepts raw sql, only known field names.  If you have raw SQL then use ->orderBy
+  * ### @@@@ STOP REPLACEMENT @@@@ ###
+  */
             ->sort(
                 [
                     "StartDate" => "ASC",
@@ -379,6 +388,15 @@ class Calendar extends Page
             }
         }
 
+
+/**
+  * ### @@@@ START REPLACEMENT @@@@ ###
+  * WHY: automated upgrade
+  * OLD: ->sort(
+  * NEW: ->sort( ...  (COMPLEX)
+  * EXP: This method no longer accepts raw sql, only known field names.  If you have raw SQL then use ->orderBy
+  * ### @@@@ STOP REPLACEMENT @@@@ ###
+  */
         $eventList = $eventList->sort(
             [
                 'StartDate' => 'ASC',
@@ -478,7 +496,15 @@ class Calendar extends Page
         $counter = Carbon::parse($datetimeObj->StartDate);
 
         if ($event = $datetimeObj->Event()->DateTimes()->First()) {
-            $endDate = strtotime($event->EndDate);
+
+/**
+  * ### @@@@ START REPLACEMENT @@@@ ###
+  * WHY: automated upgrade
+  * OLD: strtotime($
+  * EXP: SS5 change
+  * ### @@@@ STOP REPLACEMENT @@@@ ###
+  */
+            $endDate = strtotime((string) $event->EndDate);
         } else {
             $endDate = false;
         }
@@ -543,7 +569,15 @@ class Calendar extends Page
                     }
                     // check the end date
                     if ($recurringEventDatetime->EndDate) {
-                        $endStamp = strtotime($recurringEventDatetime->EndDate);
+
+/**
+  * ### @@@@ START REPLACEMENT @@@@ ###
+  * WHY: automated upgrade
+  * OLD: strtotime($
+  * EXP: SS5 change
+  * ### @@@@ STOP REPLACEMENT @@@@ ###
+  */
+                        $endStamp = strtotime((string) $recurringEventDatetime->EndDate);
                         if ($endStamp > 0 && $endStamp < $dateCounter->getTimestamp()) {
                             break;
                         }
@@ -707,6 +741,15 @@ class Calendar extends Page
             $endDate->yesterday()->toDateString(),
             $filter,
             $l
+
+/**
+  * ### @@@@ START REPLACEMENT @@@@ ###
+  * WHY: automated upgrade
+  * OLD: ->sort(
+  * NEW: ->sort( ...  (COMPLEX)
+  * EXP: This method no longer accepts raw sql, only known field names.  If you have raw SQL then use ->orderBy
+  * ### @@@@ STOP REPLACEMENT @@@@ ###
+  */
         )->sort('StartDate DESC');
 
         return $events->limit($limit);
