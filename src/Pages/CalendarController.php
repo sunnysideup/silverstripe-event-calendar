@@ -88,7 +88,7 @@ class CalendarController extends PageController
         }
         if (Calendar::config()->include_calendar_js) {
             if (!Calendar::config()->jquery_included) {
-                Requirements::javascript('silverstripe/admin:thirdparty/jquery/jquery.min.js');
+                Requirements::javascript('sunnysideup/silverstripe-event-calendar:client/dist/js/jquery.min.js');
             }
             Requirements::javascript('sunnysideup/silverstripe-event-calendar:client/dist/js/calendar.js');
         }
