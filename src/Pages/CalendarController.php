@@ -36,7 +36,7 @@ use SilverStripe\ORM\ArrayList;
 use SilverStripe\ORM\DataList;
 use SilverStripe\ORM\DataObject;
 use SilverStripe\View\Requirements;
-use \PageController;
+use PageController;
 
 class CalendarController extends PageController
 {
@@ -97,14 +97,6 @@ class CalendarController extends PageController
     public function index(HTTPRequest $r)
     {
 
-/**
-  * ### @@@@ START REPLACEMENT @@@@ ###
-  * WHY: automated upgrade
-  * OLD: ->extend(
-  * NEW: ->extend( ...  (COMPLEX)
-  * EXP: Changed parameter name in ... SilverStripe\Core\Extensible::extend() from $a1 to $arguments and modified it to accept variable arguments using the splat operator
-  * ### @@@@ STOP REPLACEMENT @@@@ ###
-  */
         $this->extend('index', $r);
 
         switch ($this->DefaultView) {
@@ -207,13 +199,6 @@ class CalendarController extends PageController
         $xml = str_replace('&nbsp;', '&#160;', $rss->renderWith('SilverStripe\Control\RSS\RSSFeed'));
         $xml = preg_replace('/<!--(.|\s)*?-->/', '', $xml);
 
-/**
-  * ### @@@@ START REPLACEMENT @@@@ ###
-  * WHY: automated upgrade
-  * OLD: trim(
-  * EXP: SS5 change
-  * ### @@@@ STOP REPLACEMENT @@@@ ###
-  */
         $xml = trim((string) $xml);
 
         return $this->getResponse()
@@ -433,14 +418,6 @@ class CalendarController extends PageController
                 $this->getResponse()->addHeader("Content-disposition", "attachment; filename=".$FILENAME);
             }
 
-
-/**
-  * ### @@@@ START REPLACEMENT @@@@ ###
-  * WHY: automated upgrade
-  * OLD: trim(
-  * EXP: SS5 change
-  * ### @@@@ STOP REPLACEMENT @@@@ ###
-  */
             $result = trim((string) strip_tags($this->customise(
                 [
                     'HOST' => $HOST,
@@ -485,7 +462,7 @@ class CalendarController extends PageController
             switch (strlen(str_replace("-", "", $r->param('ID')))) {
                 case 8:
                     $this->view = "day";
-                    $this->endDate = Carbon::createFromTimestamp($d->getTimestamp()+1);
+                    $this->endDate = Carbon::createFromTimestamp($d->getTimestamp() + 1);
                     break;
 
                 case 6:
@@ -516,15 +493,6 @@ class CalendarController extends PageController
             $s = Convert::raw2sql($search);
             $eventFilter = "\"SiteTree\".\"Title\" LIKE '%$s%' OR \"SiteTree\".\"Content\" LIKE '%$s%'";
             $announcementFilter = "\"CalendarAnnouncement\".\"Title\" LIKE '%$s%' OR \"CalendarAnnouncement\".\"Content\" LIKE '%$s%'";
-
-/**
-  * ### @@@@ START REPLACEMENT @@@@ ###
-  * WHY: automated upgrade
-  * OLD: SearchQuery
-  * NEW: SearchQuery ...  (COMPLEX)
-  * EXP: Removed deprecated method ... SilverStripe\FullTextSearch\Search\Queries\SearchQuery::exclude() / ::filter / ::limit - use SilverStripe\FullTextSearch\Search\Queries\SearchQuery::addExclude(), addFilter, setLimit instead
-  * ### @@@@ STOP REPLACEMENT @@@@ ###
-  */
             $this->SearchQuery = $search;
             $endDate = Carbon::now()->addMonths($this->DefaultFutureMonths);
         }
@@ -763,15 +731,6 @@ class CalendarController extends PageController
             ? $this->config()->default_organiser
             : ":MAILTO:".Email::config()->admin_email;
 
-
-/**
-  * ### @@@@ START REPLACEMENT @@@@ ###
-  * WHY: automated upgrade
-  * OLD: ->extend(
-  * NEW: ->extend( ...  (COMPLEX)
-  * EXP: Changed parameter name in ... SilverStripe\Core\Extensible::extend() from $a1 to $arguments and modified it to accept variable arguments using the splat operator
-  * ### @@@@ STOP REPLACEMENT @@@@ ###
-  */
         $this->extend('updateOrganiser', $organiser);
         return $organiser;
     }

@@ -155,14 +155,6 @@ class ICSWriter
     {
         $timestamp = null;
         if ($date && $time) {
-
-/**
-  * ### @@@@ START REPLACEMENT @@@@ ###
-  * WHY: automated upgrade
-  * OLD: strtotime($
-  * EXP: SS5 change
-  * ### @@@@ STOP REPLACEMENT @@@@ ###
-  */
             $timestamp = strtotime((string) $date . ' ' . $time);
         } else {
             $timestamp = time();

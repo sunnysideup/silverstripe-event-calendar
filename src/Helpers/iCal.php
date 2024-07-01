@@ -16,25 +16,18 @@ class iCal
     {
         $this->ics_files = $ics_files;
     }
-     
+
     public function iCalList()
     {
         return array_filter($this->ics_files, [$this, "iCalClean"]);
     }
-     
+
     public function iCalClean($file)
     {
 
-/**
-  * ### @@@@ START REPLACEMENT @@@@ ###
-  * WHY: automated upgrade
-  * OLD: strpos($
-  * EXP: SS5 change
-  * ### @@@@ STOP REPLACEMENT @@@@ ###
-  */
         return strpos((string) $file, '.ics');
     }
-     
+
     public function iCalReader()
     {
         $iCaltoArray = [];
@@ -44,7 +37,7 @@ class iCal
         }
         return $iCaltoArray;
     }
-     
+
     public function iCalDecoder($file)
     {
         $ical = file_get_contents($file);

@@ -32,7 +32,7 @@ use UncleCheese\EventCalendar\Models\ICSFeed;
 use UncleCheese\EventCalendar\Pages\CalendarController;
 use UncleCheese\EventCalendar\Pages\CalendarEvent;
 use UncleCheese\EventCalendar\Views\CalendarWidget;
-use \Page;
+use Page;
 
 class Calendar extends Page
 {
@@ -288,7 +288,7 @@ class Calendar extends Page
     /**
      * @return string
      */
-    public function getDateToEventRelation() : string
+    public function getDateToEventRelation(): string
     {
         if ($this->dateToEventRelation_cache) {
             return (string) $this->dateToEventRelation_cache;
@@ -320,14 +320,6 @@ class Calendar extends Page
                 ]
             )
 
-/**
-  * ### @@@@ START REPLACEMENT @@@@ ###
-  * WHY: automated upgrade
-  * OLD: ->sort(
-  * NEW: ->sort( ...  (COMPLEX)
-  * EXP: This method no longer accepts raw sql, only known field names.  If you have raw SQL then use ->orderBy
-  * ### @@@@ STOP REPLACEMENT @@@@ ###
-  */
             ->sort(
                 [
                     "StartDate" => "ASC",
@@ -387,16 +379,6 @@ class Calendar extends Page
                 $eventList->merge($feedevents);
             }
         }
-
-
-/**
-  * ### @@@@ START REPLACEMENT @@@@ ###
-  * WHY: automated upgrade
-  * OLD: ->sort(
-  * NEW: ->sort( ...  (COMPLEX)
-  * EXP: This method no longer accepts raw sql, only known field names.  If you have raw SQL then use ->orderBy
-  * ### @@@@ STOP REPLACEMENT @@@@ ###
-  */
         $eventList = $eventList->sort(
             [
                 'StartDate' => 'ASC',
@@ -496,14 +478,6 @@ class Calendar extends Page
         $counter = Carbon::parse($datetimeObj->StartDate);
 
         if ($event = $datetimeObj->Event()->DateTimes()->First()) {
-
-/**
-  * ### @@@@ START REPLACEMENT @@@@ ###
-  * WHY: automated upgrade
-  * OLD: strtotime($
-  * EXP: SS5 change
-  * ### @@@@ STOP REPLACEMENT @@@@ ###
-  */
             $endDate = strtotime((string) $event->EndDate);
         } else {
             $endDate = false;
@@ -569,14 +543,6 @@ class Calendar extends Page
                     }
                     // check the end date
                     if ($recurringEventDatetime->EndDate) {
-
-/**
-  * ### @@@@ START REPLACEMENT @@@@ ###
-  * WHY: automated upgrade
-  * OLD: strtotime($
-  * EXP: SS5 change
-  * ### @@@@ STOP REPLACEMENT @@@@ ###
-  */
                         $endStamp = strtotime((string) $recurringEventDatetime->EndDate);
                         if ($endStamp > 0 && $endStamp < $dateCounter->getTimestamp()) {
                             break;
@@ -741,16 +707,7 @@ class Calendar extends Page
             $endDate->yesterday()->toDateString(),
             $filter,
             $l
-
-/**
-  * ### @@@@ START REPLACEMENT @@@@ ###
-  * WHY: automated upgrade
-  * OLD: ->sort(
-  * NEW: ->sort( ...  (COMPLEX)
-  * EXP: This method no longer accepts raw sql, only known field names.  If you have raw SQL then use ->orderBy
-  * ### @@@@ STOP REPLACEMENT @@@@ ###
-  */
-        )->sort('StartDate DESC');
+        )->sort(['StartDate' => 'DESC']);
 
         return $events->limit($limit);
     }

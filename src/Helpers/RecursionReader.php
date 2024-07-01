@@ -10,9 +10,9 @@ use SilverStripe\Core\Injector\Injectable;
 class RecursionReader
 {
     use Injectable;
-    
-    const DAY_SECONDS = 86400;		// Seconds in a day
-    const WEEK_SECONDS = 604800;	// Seconds in a week
+
+    public const DAY_SECONDS = 86400;		// Seconds in a day
+    public const WEEK_SECONDS = 604800;	// Seconds in a week
 
     /**
      * @var CalendarEvent
@@ -38,7 +38,7 @@ class RecursionReader
      * @var array
      */
     protected $allowedDaysOfWeek = [];
-    
+
     /**
      * @var array
      */
@@ -65,18 +65,10 @@ class RecursionReader
         $this->datetimeClass = $cal->getDateTimeClass();
         $this->eventClass = $cal->getEventClass();
         $relation = $cal->getDateToEventRelation();
-    
+
         if ($datetime = DataList::create($this->datetimeClass)
             ->filter($relation, $event->ID)->first()
         ) {
-
-/**
-  * ### @@@@ START REPLACEMENT @@@@ ###
-  * WHY: automated upgrade
-  * OLD: strtotime($
-  * EXP: SS5 change
-  * ### @@@@ STOP REPLACEMENT @@@@ ###
-  */
             $this->ts = strtotime((string) $datetime->StartDate);
         }
 
@@ -93,7 +85,7 @@ class RecursionReader
                 }
             }
         }
-                
+
         if ($exceptions = $event->getComponents('Exceptions')) {
             foreach ($exceptions as $exception) {
                 $this->exceptions[] = $exception->ExceptionDate;
@@ -110,7 +102,7 @@ class RecursionReader
         $testDate = Carbon::createFromTimestamp($ts);
         $startDate = Carbon::createFromTimestamp($this->ts);
         $result = false;
-        
+
         // Current date is before the recurring event begins.
         if ($testDate->getTimestamp() < $startDate->getTimestamp()
             || in_array($testDate->toDateString(), $this->exceptions)
@@ -129,7 +121,7 @@ class RecursionReader
                 }
                 break;
 
-            // Weekly
+                // Weekly
             case CalendarEvent::RECUR_INTERVAL_WEEKLY:
                 $testFirstDay = clone $testDate;
                 $testFirstDay->modify(
@@ -144,7 +136,7 @@ class RecursionReader
                 };
                 break;
 
-            // Monthly
+                // Monthly
             case CalendarEvent::RECUR_INTERVAL_MONTHLY:
                 if (self::difference_in_months($testDate, $startDate) % $this->event->MonthlyInterval == 0) {
                     if ($this->event->MonthlyRecursionType1 == 1) {

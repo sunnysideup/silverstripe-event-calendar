@@ -1,6 +1,7 @@
 <?php
 
 namespace UncleCheese\EventCalendar\Models;
+
 use SilverStripe\ORM\DataObject;
 
 use Symbiote\MemberProfiles\Pages\MemberProfilePage;
@@ -10,7 +11,6 @@ use UncleCheese\EventCalendar\Pages\CalendarEvent;
 
 class Region extends DataObject
 {
-
     private static $regions = [];
 
     private static $table_name = 'Region';
@@ -27,7 +27,7 @@ class Region extends DataObject
         'CalendarEvents' => CalendarEvent::class,
     ];
 
-    function requireDefaultRecords()
+    public function requireDefaultRecords()
     {
         $data = $this->Config()->get('regions');
         foreach($data as $title) {
@@ -40,18 +40,9 @@ class Region extends DataObject
 
     protected static $upcoming_events = null;
 
-    public function HasEvents() : bool
+    public function HasEvents(): bool
     {
         if(self::$upcoming_events === null) {
-
-/**
-  * ### @@@@ START REPLACEMENT @@@@ ###
-  * WHY: automated upgrade
-  * OLD: ::get_one(
-  * NEW: ::get_one( ...  (COMPLEX)
-  * EXP: Changed parameter name in ... SilverStripe\ORM\DataObject::get_one() from $orderby to $sort. TBC
-  * ### @@@@ STOP REPLACEMENT @@@@ ###
-  */
             self::$upcoming_events = DataObject::get_one(Calendar::class)->UpcomingEvents(9999);
         }
         if(self::$upcoming_events->exists()) {
@@ -64,15 +55,6 @@ class Region extends DataObject
 
     public function Link()
     {
-
-/**
-  * ### @@@@ START REPLACEMENT @@@@ ###
-  * WHY: automated upgrade
-  * OLD: ::get_one(
-  * NEW: ::get_one( ...  (COMPLEX)
-  * EXP: Changed parameter name in ... SilverStripe\ORM\DataObject::get_one() from $orderby to $sort. TBC
-  * ### @@@@ STOP REPLACEMENT @@@@ ###
-  */
         return DataObject::get_one(Calendar::class)->Link('region/'.$this->Title);
     }
 

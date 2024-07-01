@@ -8,13 +8,13 @@ use UncleCheese\EventCalendar\Pages\Calendar;
 
 class CalendarUtil
 {
-    const ONE_DAY = "OneDay";
-    const SAME_MONTH_SAME_YEAR = "SameMonthSameYear";
-    const DIFF_MONTH_SAME_YEAR = "DiffMonthSameYear";
-    const DIFF_MONTH_DIFF_YEAR = "DiffMonthDiffYear";
-    const ONE_DAY_HEADER = "OneDayHeader";
-    const MONTH_HEADER = "MonthHeader";
-    const YEAR_HEADER = "YearHeader";
+    public const ONE_DAY = "OneDay";
+    public const SAME_MONTH_SAME_YEAR = "SameMonthSameYear";
+    public const DIFF_MONTH_SAME_YEAR = "DiffMonthSameYear";
+    public const DIFF_MONTH_DIFF_YEAR = "DiffMonthDiffYear";
+    public const ONE_DAY_HEADER = "OneDayHeader";
+    public const MONTH_HEADER = "MonthHeader";
+    public const YEAR_HEADER = "YearHeader";
 
     /**
      * @return array
@@ -86,7 +86,7 @@ class CalendarUtil
         } else {
             $template = _t(Calendar::class.".$key", $key);
         }
-        
+
         return str_replace(
             self::$format_character_placeholders,
             self::format_character_replacements($start, $end),
@@ -108,17 +108,9 @@ class CalendarUtil
                     $missing -= 2;
                 }
             }
-
-/**
-  * ### @@@@ START REPLACEMENT @@@@ ###
-  * WHY: automated upgrade
-  * OLD: substr($
-  * EXP: SS5 change
-  * ### @@@@ STOP REPLACEMENT @@@@ ###
-  */
             return substr((string) $str, 0, 4) . "-" . substr((string) $str, 4, 2) . "-" . substr((string) $str, 6, 2);
         }
-        
+
         return date('Y-m-d');
     }
 
@@ -129,32 +121,15 @@ class CalendarUtil
     {
         $strStartDate = null;
         $strEndDate = null;
-        
-
-/**
-  * ### @@@@ START REPLACEMENT @@@@ ###
-  * WHY: automated upgrade
-  * OLD: strtotime($
-  * EXP: SS5 change
-  * ### @@@@ STOP REPLACEMENT @@@@ ###
-  */
         $start = strtotime((string) $startDate);
-
-/**
-  * ### @@@@ START REPLACEMENT @@@@ ###
-  * WHY: automated upgrade
-  * OLD: strtotime($
-  * EXP: SS5 change
-  * ### @@@@ STOP REPLACEMENT @@@@ ###
-  */
         $end = strtotime((string) $endDate);
-        
+
         $startYear = date("Y", $start);
         $startMonth = date("m", $start);
-        
+
         $endYear = date("Y", $end);
         $endMonth = date("m", $end);
-        
+
         // Invalid date. Get me out of here!
         if ($start < 1) {
             return;
@@ -170,33 +145,11 @@ class CalendarUtil
         }
         $dateString = self::localize($start, $end, $key);
 
-/**
-  * ### @@@@ START REPLACEMENT @@@@ ###
-  * WHY: automated upgrade
-  * OLD: strpos($
-  * EXP: SS5 change
-  * ### @@@@ STOP REPLACEMENT @@@@ ###
-  */
         $break = strpos((string) $dateString, '$End');
         if ($break !== false) {
 
-/**
-  * ### @@@@ START REPLACEMENT @@@@ ###
-  * WHY: automated upgrade
-  * OLD: substr($
-  * EXP: SS5 change
-  * ### @@@@ STOP REPLACEMENT @@@@ ###
-  */
             $strStartDate = substr((string) $dateString, 0, $break);
-
-/**
-  * ### @@@@ START REPLACEMENT @@@@ ###
-  * WHY: automated upgrade
-  * OLD: substr($
-  * EXP: SS5 change
-  * ### @@@@ STOP REPLACEMENT @@@@ ###
-  */
-            $strEndDate = substr((string) $dateString, $break+1, strlen((string) $dateString) - strlen((string) $strStartDate));
+            $strEndDate = substr((string) $dateString, $break + 1, strlen((string) $dateString) - strlen((string) $strStartDate));
             return [$strStartDate, $strEndDate];
         }
 
@@ -212,13 +165,6 @@ class CalendarUtil
             return "";
         }
 
-/**
-  * ### @@@@ START REPLACEMENT @@@@ ###
-  * WHY: automated upgrade
-  * OLD: strtotime($
-  * EXP: SS5 change
-  * ### @@@@ STOP REPLACEMENT @@@@ ###
-  */
         $ts = strtotime((string) $date . " " . $time);
         if ($ts < 1) {
             return "";
@@ -287,7 +233,7 @@ class CalendarUtil
     {
         uasort($data, [self::class, "date_sort_callback"]);
     }
-    
+
     /**
      * Callback used by column_sort
      */
@@ -296,26 +242,18 @@ class CalendarUtil
         if ($a->StartDate == $b->StartDate) {
             if ($a->StartTime == $b->StartTime) {
                 return 0;
-
-/**
-  * ### @@@@ START REPLACEMENT @@@@ ###
-  * WHY: automated upgrade
-  * OLD: strtotime($
-  * EXP: SS5 change
-  * ### @@@@ STOP REPLACEMENT @@@@ ###
-  */
             } elseif (strtotime((string) $a->StartTime) > strtotime((string) $b->StartTime)) {
                 return 1;
             }
             return -1;
 
-/**
-  * ### @@@@ START REPLACEMENT @@@@ ###
-  * WHY: automated upgrade
-  * OLD: strtotime($
-  * EXP: SS5 change
-  * ### @@@@ STOP REPLACEMENT @@@@ ###
-  */
+            /**
+              * ### @@@@ START REPLACEMENT @@@@ ###
+              * WHY: automated upgrade
+              * OLD: strtotime($
+              * EXP: SS5 change
+              * ### @@@@ STOP REPLACEMENT @@@@ ###
+              */
         } elseif (strtotime((string) $a->StartDate) > strtotime((string) $b->StartDate)) {
             return 1;
         }
