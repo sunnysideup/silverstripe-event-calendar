@@ -3,6 +3,7 @@
 namespace UncleCheese\EventCalendar\Helpers;
 
 use Carbon\Carbon;
+use DateTime;
 use UncleCheese\EventCalendar\Models\CalendarDateTime;
 use UncleCheese\EventCalendar\Pages\Calendar;
 
@@ -47,33 +48,37 @@ class CalendarUtil
     /**
      * @return array
      */
-    public static function format_character_replacements($start, $end)
+    public static function formatCharacterReplacements(int $start, int $end): array
     {
+        $startDateTime = new DateTime('@' . $start);
+        $endDateTime = new DateTime('@' . $end);
+
         return [
-            strftime('%a', $start),
-            strftime('%A', $start),
-            date('j', $start),
-            date('d', $start),
-            date('S', $start),
-            date('n', $start),
-            date('m', $start),
-            strftime('%b', $start),
-            strftime('%B', $start),
-            date('y', $start),
-            date('Y', $start),
-            strftime('%a', $end),
-            strftime('%A', $end),
-            date('j', $end),
-            date('d', $end),
-            date('S', $end),
-            date('n', $end),
-            date('m', $end),
-            strftime('%b', $end),
-            strftime('%B', $end),
-            date('y', $end),
-            date('Y', $end),
+            $startDateTime->format('D'),
+            $startDateTime->format('l'),
+            $startDateTime->format('j'),
+            $startDateTime->format('d'),
+            $startDateTime->format('S'),
+            $startDateTime->format('n'),
+            $startDateTime->format('m'),
+            $startDateTime->format('M'),
+            $startDateTime->format('F'),
+            $startDateTime->format('y'),
+            $startDateTime->format('Y'),
+            $endDateTime->format('D'),
+            $endDateTime->format('l'),
+            $endDateTime->format('j'),
+            $endDateTime->format('d'),
+            $endDateTime->format('S'),
+            $endDateTime->format('n'),
+            $endDateTime->format('m'),
+            $endDateTime->format('M'),
+            $endDateTime->format('F'),
+            $endDateTime->format('y'),
+            $endDateTime->format('Y'),
         ];
     }
+
 
     /**
      * @return string
@@ -180,22 +185,17 @@ class CalendarUtil
     /**
      * @return array
      */
-    public static function get_months_map($key = '%b')
+    public static function getMonthsMap(string $key = 'M'): array
     {
-        return [
-            '01' => strftime($key, strtotime('2000-01-01')),
-            '02' => strftime($key, strtotime('2000-02-01')),
-            '03' => strftime($key, strtotime('2000-03-01')),
-            '04' => strftime($key, strtotime('2000-04-01')),
-            '05' => strftime($key, strtotime('2000-05-01')),
-            '06' => strftime($key, strtotime('2000-06-01')),
-            '07' => strftime($key, strtotime('2000-07-01')),
-            '08' => strftime($key, strtotime('2000-08-01')),
-            '09' => strftime($key, strtotime('2000-09-01')),
-            '10' => strftime($key, strtotime('2000-10-01')),
-            '11' => strftime($key, strtotime('2000-11-01')),
-            '12' => strftime($key, strtotime('2000-12-01'))
-        ];
+        $months = [];
+
+        for ($month = 1; $month <= 12; $month++) {
+            $dateTime = new DateTime("2000-$month-01");
+            $formattedMonth = str_pad($month, 2, '0', STR_PAD_LEFT);
+            $months[$formattedMonth] = $dateTime->format($key);
+        }
+
+        return $months;
     }
 
     /**
