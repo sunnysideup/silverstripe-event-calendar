@@ -246,14 +246,6 @@ class CalendarUtil
                 return 1;
             }
             return -1;
-
-            /**
-              * ### @@@@ START REPLACEMENT @@@@ ###
-              * WHY: automated upgrade
-              * OLD: strtotime($
-              * EXP: SS5 change
-              * ### @@@@ STOP REPLACEMENT @@@@ ###
-              */
         } elseif (strtotime((string) $a->StartDate) > strtotime((string) $b->StartDate)) {
             return 1;
         }

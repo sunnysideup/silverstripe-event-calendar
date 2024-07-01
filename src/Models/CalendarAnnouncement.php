@@ -42,14 +42,6 @@ class CalendarAnnouncement extends CalendarDateTime
                 TextField::create('Title', _t(__CLASS__.'.TITLE', 'Title of announcement'))
             );
 
-            /**
-              * ### @@@@ START REPLACEMENT @@@@ ###
-              * WHY: automated upgrade
-              * OLD: ->insertBefore(
-              * NEW: ->insertBefore( ...  (COMPLEX)
-              * EXP: Name of the field to insert before is listed first, then the field - just check this.
-              * ### @@@@ STOP REPLACEMENT @@@@ ###
-              */
             $f->insertBefore(
                 'StartDate',
                 TextareaField::create('Content', _t(__CLASS__.'.CONTENT', 'Announcement content'))

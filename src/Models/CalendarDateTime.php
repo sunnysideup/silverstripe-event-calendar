@@ -48,7 +48,7 @@ class CalendarDateTime extends DataObject
     /**
      * @var string
      */
-    private static $date_format_override ='dmy';
+    private static $date_format_override = 'dmy';
 
     /**
      * @var string
@@ -80,15 +80,6 @@ class CalendarDateTime extends DataObject
             CheckboxField::create('AllDay', _t(__CLASS__.'.ALLDAY', 'This event lasts all day'))
         );
 
-
-/**
-  * ### @@@@ START REPLACEMENT @@@@ ###
-  * WHY: automated upgrade
-  * OLD: ->extend(
-  * NEW: ->extend( ...  (COMPLEX)
-  * EXP: Changed parameter name in ... SilverStripe\Core\Extensible::extend() from $a1 to $arguments and modified it to accept variable arguments using the splat operator
-  * ### @@@@ STOP REPLACEMENT @@@@ ###
-  */
         $this->extend('updateCMSFields', $fields);
 
         return $fields;
