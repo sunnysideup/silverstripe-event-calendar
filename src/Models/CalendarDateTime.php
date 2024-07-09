@@ -140,7 +140,7 @@ class CalendarDateTime extends DataObject
     }
 
     /**
-     * @return bool|SilverStripe\ORM\DataList
+     * @return bool|\SilverStripe\ORM\DataList
      */
     public function getOtherDates()
     {

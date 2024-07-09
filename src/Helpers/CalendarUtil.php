@@ -3,6 +3,7 @@
 namespace UncleCheese\EventCalendar\Helpers;
 
 use Carbon\Carbon;
+use Carbon\CarbonInterface;
 use DateTime;
 use SilverStripe\Core\Config\Config;
 use SilverStripe\Core\Config\Configurable;
@@ -231,7 +232,7 @@ class CalendarUtil
     public static function get_first_day_of_week()
     {
         $result = strtolower(_t(__CLASS__.'.FIRSTDAYOFWEEK', 'monday'));
-        return ($result == "monday") ? Carbon::MONDAY : Carbon::SUNDAY;
+        return ($result == "monday") ? CarbonInterface::MONDAY : CarbonInterface::SUNDAY;
     }
 
     public static function date_sort(&$data)
