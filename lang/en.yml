@@ -1,9 +1,9 @@
 en:
   UncleCheese\EventCalendar\Pages\Calendar:
     OneDay: '$StartDayNameShort, $StartMonthNameShort. $StartDayNumberShort, $StartYearLong'
-    SameMonthSameYear: '$StartMonthNameShort. $StartDayNumberShort — $EndDayNumberShort, $EndYearLong'
-    DiffMonthSameYear: '$StartMonthNameShort. $StartDayNumberShort — $EndMonthNameShort. $EndDayNumberShort, $EndYearLong'
-    DiffMonthDiffYear: '$StartMonthNameShort. $StartDayNumberShort, $StartYearLong — $EndMonthNameShort. $EndDayNumberShort, $EndYearLong'
+    SameMonthSameYear: '$StartMonthNameShort. $StartDayNumberShort $StartEndSeparator $EndDayNumberShort, $EndYearLong'
+    DiffMonthSameYear: '$StartMonthNameShort. $StartDayNumberShort $StartEndSeparator $EndMonthNameShort. $EndDayNumberShort, $EndYearLong'
+    DiffMonthDiffYear: '$StartMonthNameShort. $StartDayNumberShort, $StartYearLong $StartEndSeparator $EndMonthNameShort. $EndDayNumberShort, $EndYearLong'
     OneDayHeader: '$StartMonthNameLong $StartDayNumberShort$StartDaySuffix, $StartYearLong'
     MonthHeader: '$StartMonthNameLong, $StartYearLong'
     YearHeader: '$StartYearLong'
@@ -11,4 +11,3 @@ en:
     DATEFORMAT: mdy
     TIMEFORMAT: 12
     FIRSTDAYOFWEEK: Sunday
-    

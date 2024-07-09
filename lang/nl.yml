@@ -4,15 +4,15 @@ nl:
     SINGULARNAME: Kalender
     DESCRIPTION: Agenda met verzameling kalender items en aankondigingen
     OneDay: '$StartDayNumberShort $StartMonthNameShort. $StartYearLong'
-    SameMonthSameYear: '$StartDayNumberShort - $EndDayNumberShort $EndMonthNameShort. $EndYearLong'
-    DiffMonthSameYear: '$StartDayNumberShort $StartMonthNameShort. - $EndDayNumberShort $EndMonthNameShort. $EndYearLong'
-    DiffMonthDiffYear: '$StartDayNumberShort $StartMonthNameShort. $StartYearLong - $EndDayNumberShort $EndMonthNameShort. $EndYearLong'
+    SameMonthSameYear: '$StartDayNumberShort $StartEndSeparator $EndDayNumberShort $EndMonthNameShort. $EndYearLong'
+    DiffMonthSameYear: '$StartDayNumberShort $StartMonthNameShort. $StartEndSeparator $EndDayNumberShort $EndMonthNameShort. $EndYearLong'
+    DiffMonthDiffYear: '$StartDayNumberShort $StartMonthNameShort. $StartYearLong $StartEndSeparator $EndDayNumberShort $EndMonthNameShort. $EndYearLong'
     OneDayHeader: '$StartDayNumberLong $StartMonthLong $StartYearLong'
     MonthHeader: '$StartMonthNameLong $StartYearLong'
     YearHeader: '$StartYearLong'
     NUMBEROFEVENTS: 'Aantal events'
-    DEFAULTDATEHEADER: 'Standaard hoofding.'
-    NUMBERFUTUREDATES: 'Aantal toekomstige datums'
+    # DEFAULTDATEHEADER: 'Standaard hoofding.'
+    NUMBERFUTUREDATES: 'Aantal toekomstige data voor herhalende evenementen'
     UPCOMINGEVENTSFOR: 'Toekomstige evenst voor %s'
     FILTER: Filteren
     Announcements: Aankondigingen
@@ -21,7 +21,7 @@ nl:
     ENDDATE: Einddatum
     STARTTIME: Starttijd
     ENDTIME: Eindtijd
-    ALLDAY: Heledag
+    # ALLDAY: Heledag
     ANNOUNCEMENTDESCRIPTION: Aankodingingen zijn simpele items die je aan de kalender kan toevoegen zonder een detail pagina. Bijvoorbeeld 'Kantoor gesloten'
     DEFAULTVIEW: Standaard overzicht
     UPCOMINGVIEW: Toon een lijst van aankomende evenementen
@@ -32,7 +32,7 @@ nl:
     DEFAULTFUTUREMONTHS: Maximum aantal toekomstige maanden in het standaard overzicht
     EVENTSPERPAGE: Evenementen per pagina
     DEFAULTDATEHEADER: Standaard datum titel, als er geen is ingevuld
-    NUMBERFUTUREDATES: Aantal toekomstige data voor herhalende evenementen
+    # NUMBERFUTUREDATES: Aantal toekomstige data voor herhalende evenementen
     FEEDS: ICS Feeds
     ICSFEEDDESCRIPTION: Voeg een ICS feeds toe aan je kalender voor het importeren van een externe kalender, bijvoorbeeld Google Calendar
     RSSTITLE: Titel van RSS Feed
@@ -44,7 +44,7 @@ nl:
     MORE: meer...
     SEEALSO: 'Zie ook'
     ADD: 'Aan mijn kalender toevoegen'
-    NOEVENTS: 'Geen events gevonden.' 
+    NOEVENTS: 'Geen events gevonden.'
   UncleCheese\EventCalendar\Models\CalendarAnnouncement:
     PLURALNAME: Aankondigingen
     SINGULARNAME: Aankondiging

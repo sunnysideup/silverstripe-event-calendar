@@ -1,9 +1,9 @@
 fi:
   UncleCheese\EventCalendar\Pages\Calendar:
     OneDay: '$StartDayNameLong, $StartDayNumberShort.$StartMonthNumberShort.$StartYearLong'
-    SameMonthSameYear: '$StartDayNumberShort.-$EndDayNumberShort.$StartMonthNumberShort.$EndYearLong'
-    DiffMonthSameYear: '$StartMonthNameShort. $StartDayNumberShort - $EndMonthNameShort. $EndDayNumberShort, $EndYearLong'
-    DiffMonthDiffYear: '$StartMonthNameShort. $StartDayNumberShort, $StartYearLong - $EndMonthNameShort. $EndDayNumberShort, $EndYearLong'
+    SameMonthSameYear: '$StartDayNumberShort. $StartEndSeparator $EndDayNumberShort.$StartMonthNumberShort.$EndYearLong'
+    DiffMonthSameYear: '$StartMonthNameShort. $StartDayNumberShort $StartEndSeparator $EndMonthNameShort. $EndDayNumberShort, $EndYearLong'
+    DiffMonthDiffYear: '$StartMonthNameShort. $StartDayNumberShort, $StartYearLong $StartEndSeparator $EndMonthNameShort. $EndDayNumberShort, $EndYearLong'
     OneDayHeader: '$StartMonthNameLong $StartDayNumberShort$StartDaySuffix, $StartYearLong'
     MonthHeader: '$StartMonthNameLong, $StartYearLong'
     YearHeader: '$StartYearLong'
@@ -17,18 +17,17 @@ fi:
     QUICKNAVWEEK: 'Tällä viikolla'
     QUICKNAVMONTH: 'Tässä kuussa'
     QUICKNAVWEEKEND: 'Nyt viikonloppuna'
-    SUBSCRIBE: 'Tilaa RSS'
     ADD: 'Tallenna tapahtuma omaan kalenteriisi'
     DATETIMEDESCRIPTION: 'Lisää päivämäärät tapahtumaan'
-    ALLDAY: 'Kokopäivä' 
-    PREVIOUSDAY: "Edellinen päivä"
-    NEXTDAY: "Seuraava päivä"
-    PREVIOUSWEEK: "Edellinen viikko"
-    NEXTWEEK: "Seuraava viikko"
-    PREVIOUSMONTH: "Edellinen kuukausi"
-    NEXTMONTH: "Seuraava kuukausi"
-    PREVIOUSWEEKEND: "Edellinen viikonloppu"
-    NEXTWEEKEND: "Seuraava viikonloppu"
+    # ALLDAY: 'Kokopäivä'
+    PREVIOUSDAY: 'Edellinen päivä'
+    NEXTDAY: 'Seuraava päivä'
+    PREVIOUSWEEK: 'Edellinen viikko'
+    NEXTWEEK: 'Seuraava viikko'
+    PREVIOUSMONTH: 'Edellinen kuukausi'
+    NEXTMONTH: 'Seuraava kuukausi'
+    PREVIOUSWEEKEND: 'Edellinen viikonloppu'
+    NEXTWEEKEND: 'Seuraava viikonloppu'
     BROWSECALENDAR: 'Selaa kalenteria'
     USECALENDAR: 'KÄytä kalenteria'
     SUBSCRIBE: 'Tilaa RSS-syöte.'
@@ -63,7 +62,7 @@ fi:
     FILTERCALENDAR: 'Suodata'
     BACKTO: 'Takaisin'
     SUBSCRIBE: 'Tilaa kalenteri.'
-    ADDITIONALDATES: 'Lisäpäivät'
+    # ADDITIONALDATES: 'Lisäpäivät'
     LOCALEFILE: date_fi.js
   UncleCheese\EventCalendar\Views\CalendarWidget:
     LOCALEFILE: 'date_fi.js'

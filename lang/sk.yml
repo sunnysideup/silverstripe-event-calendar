@@ -12,8 +12,8 @@ sk:
     DEFAULTFUTUREMONTHS: 'Maximálny počet budúcich mesiacov na predvolenom zobrazení'
     DEFAULTVIEW: 'Predvolené zobrazenie'
     DESCRIPTION: 'Zobrazí zoznam udalostí.'
-    DiffMonthDiffYear: '$StartDayNumberLong. $StartMonthNameLong $StartYearLong - $EndDayNumberLong. $EndMonthNameLong $EndYearLong'
-    DiffMonthSameYear: '$StartDayNumberLong. $StartMonthNameLong - $EndDayNumberLong. $EndMonthNameLong $StartYearLong'
+    DiffMonthDiffYear: '$StartDayNumberLong. $StartMonthNameLong $StartYearLong $StartEndSeparator $EndDayNumberLong. $EndMonthNameLong $EndYearLong'
+    DiffMonthSameYear: '$StartDayNumberLong. $StartMonthNameLong $StartEndSeparator $EndDayNumberLong. $EndMonthNameLong $StartYearLong'
     ENDDATE: 'Dátum ukončenia'
     ENDTIME: 'Čas ukončenia'
     EVENTSPERPAGE: 'Počet udalostí na stránku'
@@ -24,7 +24,7 @@ sk:
     JUMPTOMONTH: 'Prejsť na mesiac'
     LOCATIONDESCRIPTION: 'Poloha pre udalosť'
     MonthHeader: '$StartMonthNameLong $StartYearLong'
-    MONTHVIEW: "Zobraziť udalosti na tento mesiac"
+    MONTHVIEW: 'Zobraziť udalosti na tento mesiac'
     MORE: 'Čítať viac&hellip;'
     NESTEDCALENDARS: 'Zahrnúť udalostí z týchto kalendárov'
     NEXTDAY: 'Nasledujúci deň'
@@ -45,17 +45,17 @@ sk:
     PREVIOUSWEEKEND: 'Predchádzajúci víkend'
     PLURALNAME: 'Kalendáre'
     RSSTITLE: 'Názov RSS kanálu'
-    SameMonthSameYear: '$StartDayNumberLong. - $EndDayNumberLong. $StartMonthNameLong $StartYearLong'
+    SameMonthSameYear: '$StartDayNumberLong. $StartEndSeparator $EndDayNumberLong. $StartMonthNameLong $StartYearLong'
     SINGULARNAME: 'Kalendár'
     STARTDATE: 'Dátum začiatku'
     STARTTIME: 'Čas začiatku'
     SUBSCRIBE: 'Kalendár RSS'
-    TODAYVIEW: "Zobraziť dnešné udalosti. Ak nie sú, zobraziť na tento týždeň."
+    TODAYVIEW: 'Zobraziť dnešné udalosti. Ak nie sú, zobraziť na tento týždeň.'
     UPCOMINGEVENTSFOR: 'Pripravované udalosti pre %s'
-    UPCOMINGVIEW: "Zobraziť list pripravovaných udalostí."
+    UPCOMINGVIEW: 'Zobraziť list pripravovaných udalostí.'
     VIEWMOREEVENTS: 'Zobraziť viac udalostí'
-    WEEKENDVIEW: "Zobraziť udalosti na tento víkend."
-    WEEKVIEW: "Zobraziť udalosti na tento týždeň. Ak nie sú, zobraziť na tento mesiac."
+    WEEKENDVIEW: 'Zobraziť udalosti na tento víkend.'
+    WEEKVIEW: 'Zobraziť udalosti na tento týždeň. Ak nie sú, zobraziť na tento mesiac.'
     YearHeader: '$StartYearLong'
   UncleCheese\EventCalendar\Pages\CalendarEvent:
     ADD: 'Pridať do môjho kalendára (ICS)'

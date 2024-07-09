@@ -110,12 +110,13 @@ class CalendarDateTime extends DataObject
     public function getDateRange()
     {
         list($startDate, $endDate) = CalendarUtil::get_date_string($this->StartDate, $this->EndDate);
+        $templateName = __CLASS__ .'\DateRange';
         return $this->customise(
             [
                 'StartDate'	=> $startDate,
                 'EndDate'	=> $endDate
             ]
-        )->renderWith(__CLASS__ .'\DateRange');
+        )->renderWith($templateName);
     }
 
     /**

@@ -25,50 +25,23 @@ class CalendarUtil
     public const MONTH_HEADER = "MonthHeader";
     public const YEAR_HEADER = "YearHeader";
 
-    private static array $custom_date_templates = [
-        /*
-            You can modify the date display by assigning new date templates to any of the following
-            date scenarios. Use the above date format keys.
-
-            'OneDay' 			=> '$StartMonthNameShort. $StartDayNumberShort, $StartYearLong'
-            'SameMonthSameYear' => '$StartMonthNameShort. $StartDayNumberShort - $EndDatNumberShort, $EndYearLong'
-            'DiffMonthSameYear' => '$StartMonthNameShort. $StartDayNumberShort - $EndMonthNameShort. $EndDayNumberShort, $EndYearLong'
-            'DiffMonthDiffYear' => '$StartMonthNameShort. $StartDayNumberShort, $StartYearLong - $EndMonthNameShort $EndDayNumberShort, $EndYearLong'
-
-            'OneDayHeader' 			=> '$StartMonthNameLong $StartDayNumberShort$StartDaySuffix, $StartYearLong'
-            'MonthHeader' 			=> '$StartMonthNameLong, $StartYearLong'
-            'YearHeader' 				=> '$StartYearLong'
-        */
-    ];
-
-
     /**
-     * @return array
+     *      You can modify the date display by assigning new date templates to any of the following
+     *      date scenarios. Use the above date format keys.
+     *
+     *      'OneDay' 			    => '$StartMonthNameShort. $StartDayNumberShort, $StartYearLong'
+     *      'SameMonthSameYear'     => '$StartMonthNameShort. $StartDayNumberShort - $EndDatNumberShort, $EndYearLong'
+     *      'DiffMonthSameYear'     => '$StartMonthNameShort. $StartDayNumberShort - $EndMonthNameShort. $EndDayNumberShort, $EndYearLong'
+     *      'DiffMonthDiffYear'     => '$StartMonthNameShort. $StartDayNumberShort, $StartYearLong - $EndMonthNameShort $EndDayNumberShort, $EndYearLong'
+     *      'OneDayHeader' 			=> '$StartMonthNameLong $StartDayNumberShort$StartDaySuffix, $StartYearLong'
+     *      'MonthHeader' 			=> '$StartMonthNameLong, $StartYearLong'
+     *      'YearHeader' 			=> '$StartYearLong'
+     *
+     * @var array
      */
-    private static $format_character_placeholders = [
-        '$StartDayNameShort',
-        '$StartDayNameLong',
-        '$StartDayNumberShort',
-        '$StartDayNumberLong',
-        '$StartDaySuffix',
-        '$StartMonthNumberShort',
-        '$StartMonthNumberLong',
-        '$StartMonthNameShort',
-        '$StartMonthNameLong',
-        '$StartYearShort',
-        '$StartYearLong',
-        '$EndDayNameShort',
-        '$EndDayNameLong',
-        '$EndDayNumberShort',
-        '$EndDayNumberLong',
-        '$EndDaySuffix',
-        '$EndMonthNumberShort',
-        '$EndMonthNumberLong',
-        '$EndMonthNameShort',
-        '$EndMonthNameLong',
-        '$EndYearShort',
-        '$EndYearLong'
-    ];
+    private static array $custom_date_templates = [];
+
+    private static $start_end_separator = '—';
 
     /**
      * @return array
@@ -95,6 +68,7 @@ class CalendarUtil
             '$StartMonthNameLong' => $startDateTime->format('F'), // StartMonthNameLong
             '$StartYearShort' => $startDateTime->format('y'), // StartYearShort
             '$StartYearLong' => $startDateTime->format('Y'), // StartYearLong
+            '$StartEndSeparator' => self::config()->start_end_separator,
             '$EndDayNameShort' => $endDateTime->format('D'), // EndDayNameShort
             '$EndDayNameLong' => $endDateTime->format('l'), // EndDayNameLong
             '$EndDayNumberShort' => $endDateTime->format('j'), // EndDayNumberShort
@@ -113,7 +87,7 @@ class CalendarUtil
     /**
      * @return string
      */
-    public static function localize($start, $end, $key)
+    public static function localize(int $start, int $end, string $key)
     {
         $customDateTemplates = Config::inst()->get(static::class, 'custom_date_templates');
         if (is_array($customDateTemplates) && isset($customDateTemplates[$key])) {
@@ -179,15 +153,10 @@ class CalendarUtil
             $key = self::DIFF_MONTH_DIFF_YEAR;
         }
         $dateString = self::localize($start, $end, $key);
-
-        $break = strpos((string) $dateString, '$End');
-        if ($break !== false) {
-
-            $strStartDate = substr((string) $dateString, 0, $break);
-            $strEndDate = substr((string) $dateString, $break + 1, strlen((string) $dateString) - strlen((string) $strStartDate));
-            return [$strStartDate, $strEndDate];
+        $brokenUpIntoStartAndEnd = explode(self::config()->start_end_separator, $dateString);
+        if (count($brokenUpIntoStartAndEnd) === 2) {
+            return [$brokenUpIntoStartAndEnd[0], $brokenUpIntoStartAndEnd[1]];
         }
-
         return [$dateString, ""];
     }
 

@@ -521,28 +521,24 @@ class CalendarController extends PageController
         switch ($this->view) {
             case 'region':
                 return $this->region->Title;
-                break;
             case "day":
                 return CalendarUtil::localize(
                     $this->startDate->getTimestamp(),
                     null,
                     CalendarUtil::ONE_DAY_HEADER
                 );
-                break;
             case "month":
                 return CalendarUtil::localize(
                     $this->startDate->getTimestamp(),
                     null,
                     CalendarUtil::MONTH_HEADER
                 );
-                break;
             case "year":
                 return CalendarUtil::localize(
                     $this->startDate->getTimestamp(),
                     null,
                     CalendarUtil::YEAR_HEADER
                 );
-                break;
             case "range":
             case "week":
             case "weekend":
@@ -551,11 +547,9 @@ class CalendarController extends PageController
                     $this->endDate->toDateString()
                 );
                 return $strStartDate.$strEndDate;
-                break;
 
             default:
                 return $this->DefaultDateHeader;
-                break;
         }
     }
 
