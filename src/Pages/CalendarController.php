@@ -73,7 +73,7 @@ class CalendarController extends PageController
     protected $endDate;
 
     /**
-     * @var string
+     * @var Region
      */
     protected $region;
 
@@ -188,22 +188,16 @@ class CalendarController extends PageController
                 $this->Title
             );
         $rss = RSSFeed::create($events, $this->Link(), $rssTitle, "", "Title", "Description");
+        return $rss->outputToBrowser();
+        // $xml = str_replace('&nbsp;', '&#160;', $rss->renderWith('SilverStripe\Control\RSS\RSSFeed'));
+        // $xml = preg_replace('/<!--(.|\s)*?-->/', '', $xml);
 
-        if (is_int($rss->lastModified)) {
-            HTTP::register_modification_timestamp($rss->lastModified);
-            header('Last-Modified: ' . gmdate("D, d M Y H:i:s", $rss->lastModified) . ' GMT');
-        }
-        if (!empty($rss->etag)) {
-            HTTP::register_etag($rss->etag);
-        }
-        $xml = str_replace('&nbsp;', '&#160;', $rss->renderWith('SilverStripe\Control\RSS\RSSFeed'));
-        $xml = preg_replace('/<!--(.|\s)*?-->/', '', $xml);
-
-        $xml = trim((string) $xml);
-
-        return $this->getResponse()
-            ->addHeader('Content-Type', 'application/rss+xml')
-            ->setBody($xml);
+        // $xml = trim((string) $xml);
+        // return $this->getResponse()
+        //     ->addHeader('Content-Type', 'application/rss+xml')
+        //     ->addHeader('ETag', $rss->etag)
+        //     ->addHeader('Last-Modified', gmdate("D, d M Y H:i:s", $rss->lastModified) . ' GMT')
+        //     ->setBody($xml);
     }
 
     /**
@@ -696,7 +690,7 @@ class CalendarController extends PageController
             $this,
             __FUNCTION__,
             FieldList::create(
-                $m = DropdownField::create('Month', '', CalendarUtil::get_months_map('%B')),
+                $m = DropdownField::create('Month', '', CalendarUtil::getMonthsMap('%B')),
                 $y = DropdownField::create('Year', '', array_combine($yearRange, $yearRange))
             ),
             FieldList::create(

@@ -4,11 +4,19 @@ namespace UncleCheese\EventCalendar\Helpers;
 
 use Carbon\Carbon;
 use DateTime;
+use SilverStripe\Core\Config\Config;
+use SilverStripe\Core\Config\Configurable;
+use SilverStripe\Core\Extensible;
+use SilverStripe\Core\Injector\Injectable;
 use UncleCheese\EventCalendar\Models\CalendarDateTime;
 use UncleCheese\EventCalendar\Pages\Calendar;
 
 class CalendarUtil
 {
+    use Configurable;
+    use Injectable;
+
+
     public const ONE_DAY = "OneDay";
     public const SAME_MONTH_SAME_YEAR = "SameMonthSameYear";
     public const DIFF_MONTH_SAME_YEAR = "DiffMonthSameYear";
@@ -16,6 +24,23 @@ class CalendarUtil
     public const ONE_DAY_HEADER = "OneDayHeader";
     public const MONTH_HEADER = "MonthHeader";
     public const YEAR_HEADER = "YearHeader";
+
+    private static array $custom_date_templates = [
+        /*
+            You can modify the date display by assigning new date templates to any of the following
+            date scenarios. Use the above date format keys.
+
+            'OneDay' 			=> '$StartMonthNameShort. $StartDayNumberShort, $StartYearLong'
+            'SameMonthSameYear' => '$StartMonthNameShort. $StartDayNumberShort - $EndDatNumberShort, $EndYearLong'
+            'DiffMonthSameYear' => '$StartMonthNameShort. $StartDayNumberShort - $EndMonthNameShort. $EndDayNumberShort, $EndYearLong'
+            'DiffMonthDiffYear' => '$StartMonthNameShort. $StartDayNumberShort, $StartYearLong - $EndMonthNameShort $EndDayNumberShort, $EndYearLong'
+
+            'OneDayHeader' 			=> '$StartMonthNameLong $StartDayNumberShort$StartDaySuffix, $StartYearLong'
+            'MonthHeader' 			=> '$StartMonthNameLong, $StartYearLong'
+            'YearHeader' 				=> '$StartYearLong'
+        */
+    ];
+
 
     /**
      * @return array
@@ -54,32 +79,33 @@ class CalendarUtil
     }
     public static function formatCharacterReplacements(int $start, int $end): array
     {
-        $startDateTime = new DateTime('@' . $start);
-        $endDateTime = new DateTime('@' . $end);
+        //@ is to set the timestamp to the unix timestamp
+        $startDateTime = new DateTime(date('Y-m-d', $start));
+        $endDateTime = new DateTime(date('Y-m-d', $end));
 
         return [
-            $startDateTime->format('D'),
-            $startDateTime->format('l'),
-            $startDateTime->format('j'),
-            $startDateTime->format('d'),
-            $startDateTime->format('S'),
-            $startDateTime->format('n'),
-            $startDateTime->format('m'),
-            $startDateTime->format('M'),
-            $startDateTime->format('F'),
-            $startDateTime->format('y'),
-            $startDateTime->format('Y'),
-            $endDateTime->format('D'),
-            $endDateTime->format('l'),
-            $endDateTime->format('j'),
-            $endDateTime->format('d'),
-            $endDateTime->format('S'),
-            $endDateTime->format('n'),
-            $endDateTime->format('m'),
-            $endDateTime->format('M'),
-            $endDateTime->format('F'),
-            $endDateTime->format('y'),
-            $endDateTime->format('Y'),
+            '$StartDayNameShort' => $startDateTime->format('D'), // StartDayNameShort
+            '$StartDayNameLong' => $startDateTime->format('l'), // StartDayNameLong
+            '$StartDayNumberShort' => $startDateTime->format('j'), // StartDayNumberShort
+            '$StartDayNumberLong' => $startDateTime->format('d'), // StartDayNumberLong
+            '$StartDaySuffix' => $startDateTime->format('S'), // StartDaySuffix
+            '$StartMonthNumberShort' => $startDateTime->format('n'), // StartMonthNumberShort
+            '$StartMonthNumberLong' => $startDateTime->format('m'), // StartMonthNumberLong
+            '$StartMonthNameShort' => $startDateTime->format('M'), // StartMonthNameShort
+            '$StartMonthNameLong' => $startDateTime->format('F'), // StartMonthNameLong
+            '$StartYearShort' => $startDateTime->format('y'), // StartYearShort
+            '$StartYearLong' => $startDateTime->format('Y'), // StartYearLong
+            '$EndDayNameShort' => $endDateTime->format('D'), // EndDayNameShort
+            '$EndDayNameLong' => $endDateTime->format('l'), // EndDayNameLong
+            '$EndDayNumberShort' => $endDateTime->format('j'), // EndDayNumberShort
+            '$EndDayNumberLong' => $endDateTime->format('d'), // EndDayNumberLong
+            '$EndDaySuffix' => $endDateTime->format('S'), // EndDaySuffix
+            '$EndMonthNumberShort' => $endDateTime->format('n'), // EndMonthNumberShort
+            '$EndMonthNumberLong' => $endDateTime->format('m'), // EndMonthNumberLong
+            '$EndMonthNameShort' => $endDateTime->format('M'), // EndMonthNameShort
+            '$EndMonthNameLong' => $endDateTime->format('F'), // EndMonthNameLong
+            '$EndYearShort' => $endDateTime->format('y'), // EndYearShort
+            '$EndYearLong' => $endDateTime->format('Y'), // EndYearLong
         ];
     }
 
@@ -89,16 +115,16 @@ class CalendarUtil
      */
     public static function localize($start, $end, $key)
     {
-        global $customDateTemplates;
+        $customDateTemplates = Config::inst()->get(static::class, 'custom_date_templates');
         if (is_array($customDateTemplates) && isset($customDateTemplates[$key])) {
             $template = $customDateTemplates[$key];
         } else {
             $template = _t(Calendar::class.".$key", $key);
         }
-
+        $replacers = self::format_character_replacements($start, $end);
         return str_replace(
-            self::$format_character_placeholders,
-            self::format_character_replacements($start, $end),
+            array_keys($replacers),
+            array_values($replacers),
             $template
         );
     }
