@@ -94,7 +94,7 @@ class CalendarUtil
     /**
      * @return string
      */
-    public static function localize(int $start, int $end, string $key)
+    public static function localize(int $start, ?int $end, string $key)
     {
         $customDateTemplates = Config::inst()->get(static::class, 'custom_date_templates');
         if (is_array($customDateTemplates) && isset($customDateTemplates[$key])) {

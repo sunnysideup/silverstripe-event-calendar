@@ -11,6 +11,8 @@
 namespace UncleCheese\EventCalendar\Pages;
 
 use Carbon\Carbon;
+use Carbon\CarbonInterface;
+use Carbon\CarbonInterval;
 use UncleCheese\EventCalendar\Helpers\CalendarUtil;
 use UncleCheese\EventCalendar\Pages\Calendar;
 use UncleCheese\EventCalendar\Helpers\ICSWriter;
@@ -102,7 +104,6 @@ class CalendarController extends PageController
         switch ($this->DefaultView) {
             case "month":
                 return $this->redirect($this->Link('show/month'));
-                break;
             case "week":
                 $this->setWeekView();
                 // prevent pagination on these default views
@@ -284,7 +285,7 @@ class CalendarController extends PageController
         $this->view = 'week';
         $this->startDate = Carbon::now()->startOfWeek();
         $this->endDate = Carbon::now()->endOfWeek();
-        if (CalendarUtil::get_first_day_of_week() == Carbon::MONDAY) {
+        if (CalendarUtil::get_first_day_of_week() == CarbonInterface::MONDAY) {
             $this->startDate = $this->startDate->tomorrow();
             $this->endDate = $this->endDate->tomorrow();
         }
@@ -295,13 +296,13 @@ class CalendarController extends PageController
     {
         $this->view = 'weekend';
         $start = Carbon::now();
-        if ($start->format('w') == Carbon::SATURDAY) {
+        if ($start->format('w') == CarbonInterface::SATURDAY) {
             $start = $start->yesterday();
-        } elseif ($start->format('w') != Carbon::FRIDAY) {
-            $start = $start->next(Carbon::FRIDAY);
+        } elseif ($start->format('w') != CarbonInterface::FRIDAY) {
+            $start = $start->next(CarbonInterface::FRIDAY);
         }
         $this->startDate = $start;
-        $this->endDate = Carbon::parse($this->startDate)->next(Carbon::SUNDAY);
+        $this->endDate = Carbon::parse($this->startDate)->next(CarbonInterface::SUNDAY);
     }
 
     public function setMonthView()
@@ -644,22 +645,22 @@ class CalendarController extends PageController
             case "today":
                 return $this->startDate->toDateString() == $this->endDate->toDateString();
             case "week":
-                if (CalendarUtil::get_first_day_of_week() == Carbon::MONDAY) {
+                if (CalendarUtil::get_first_day_of_week() == CarbonInterface::MONDAY) {
                     return
-                        ($this->startDate->format('w') == Carbon::MONDAY)
-                        && ($this->startDate->format('w') == Carbon::SUNDAY);
+                        ($this->startDate->format('w') == CarbonInterface::MONDAY)
+                        && ($this->startDate->format('w') == CarbonInterface::SUNDAY);
                 }
                 return
-                    ($this->startDate->format('w') == Carbon::SUNDAY)
-                    && ($this->endDate->format('w') == Carbon::SATURDAY);
+                    ($this->startDate->format('w') == CarbonInterface::SUNDAY)
+                    && ($this->endDate->format('w') == CarbonInterface::SATURDAY);
             case "month":
                 return
                     ($this->startDate->format('j') == 1)
                     && (Carbon::parse($this->startDate)->endOfMonth()->format('j') == $this->endDate->format('j'));
             case "weekend":
                 return
-                    ($this->startDate->format('w') == Carbon::FRIDAY)
-                    && ($this->endDate->format('w') == Carbon::SUNDAY);
+                    ($this->startDate->format('w') == CarbonInterface::FRIDAY)
+                    && ($this->endDate->format('w') == CarbonInterface::SUNDAY);
         }
         return false;
     }
@@ -707,7 +708,7 @@ class CalendarController extends PageController
     {
         return $this->redirect(
             parent::join_links(
-                $this->Link('show'),
+                $this->Link('/show'),
                 $data['Year'].$data['Month']
             )
         );
