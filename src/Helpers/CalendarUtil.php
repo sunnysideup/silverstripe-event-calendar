@@ -43,6 +43,7 @@ class CalendarUtil
 
     private static $start_end_separator = '—';
 
+    protected static $cache_format_character_replacements = [];
     /**
      * @return array
      */
@@ -50,37 +51,42 @@ class CalendarUtil
     {
         return self::formatCharacterReplacements($start, $end);
     }
+
     public static function formatCharacterReplacements(int $start, int $end): array
     {
-        //@ is to set the timestamp to the unix timestamp
-        $startDateTime = new DateTime(date('Y-m-d', $start));
-        $endDateTime = new DateTime(date('Y-m-d', $end));
+        $key = $start . "-" . $end;
+        if(!isset(self::$cache_format_character_replacements[$key])) {
+            //if we use the unix timestamp, we get a day earlier in NZ.
+            $startDateTime = new DateTime(date('Y-m-d', $start));
+            $endDateTime = new DateTime(date('Y-m-d', $end));
 
-        return [
-            '$StartDayNameShort' => $startDateTime->format('D'), // StartDayNameShort
-            '$StartDayNameLong' => $startDateTime->format('l'), // StartDayNameLong
-            '$StartDayNumberShort' => $startDateTime->format('j'), // StartDayNumberShort
-            '$StartDayNumberLong' => $startDateTime->format('d'), // StartDayNumberLong
-            '$StartDaySuffix' => $startDateTime->format('S'), // StartDaySuffix
-            '$StartMonthNumberShort' => $startDateTime->format('n'), // StartMonthNumberShort
-            '$StartMonthNumberLong' => $startDateTime->format('m'), // StartMonthNumberLong
-            '$StartMonthNameShort' => $startDateTime->format('M'), // StartMonthNameShort
-            '$StartMonthNameLong' => $startDateTime->format('F'), // StartMonthNameLong
-            '$StartYearShort' => $startDateTime->format('y'), // StartYearShort
-            '$StartYearLong' => $startDateTime->format('Y'), // StartYearLong
-            '$StartEndSeparator' => self::config()->start_end_separator,
-            '$EndDayNameShort' => $endDateTime->format('D'), // EndDayNameShort
-            '$EndDayNameLong' => $endDateTime->format('l'), // EndDayNameLong
-            '$EndDayNumberShort' => $endDateTime->format('j'), // EndDayNumberShort
-            '$EndDayNumberLong' => $endDateTime->format('d'), // EndDayNumberLong
-            '$EndDaySuffix' => $endDateTime->format('S'), // EndDaySuffix
-            '$EndMonthNumberShort' => $endDateTime->format('n'), // EndMonthNumberShort
-            '$EndMonthNumberLong' => $endDateTime->format('m'), // EndMonthNumberLong
-            '$EndMonthNameShort' => $endDateTime->format('M'), // EndMonthNameShort
-            '$EndMonthNameLong' => $endDateTime->format('F'), // EndMonthNameLong
-            '$EndYearShort' => $endDateTime->format('y'), // EndYearShort
-            '$EndYearLong' => $endDateTime->format('Y'), // EndYearLong
-        ];
+            self::$cache_format_character_replacements[$key] = [
+                '$StartDayNameShort' => $startDateTime->format('D'), // StartDayNameShort
+                '$StartDayNameLong' => $startDateTime->format('l'), // StartDayNameLong
+                '$StartDayNumberShort' => $startDateTime->format('j'), // StartDayNumberShort
+                '$StartDayNumberLong' => $startDateTime->format('d'), // StartDayNumberLong
+                '$StartDaySuffix' => $startDateTime->format('S'), // StartDaySuffix
+                '$StartMonthNumberShort' => $startDateTime->format('n'), // StartMonthNumberShort
+                '$StartMonthNumberLong' => $startDateTime->format('m'), // StartMonthNumberLong
+                '$StartMonthNameShort' => $startDateTime->format('M'), // StartMonthNameShort
+                '$StartMonthNameLong' => $startDateTime->format('F'), // StartMonthNameLong
+                '$StartYearShort' => $startDateTime->format('y'), // StartYearShort
+                '$StartYearLong' => $startDateTime->format('Y'), // StartYearLong
+                '$StartEndSeparator' => self::config()->start_end_separator,
+                '$EndDayNameShort' => $endDateTime->format('D'), // EndDayNameShort
+                '$EndDayNameLong' => $endDateTime->format('l'), // EndDayNameLong
+                '$EndDayNumberShort' => $endDateTime->format('j'), // EndDayNumberShort
+                '$EndDayNumberLong' => $endDateTime->format('d'), // EndDayNumberLong
+                '$EndDaySuffix' => $endDateTime->format('S'), // EndDaySuffix
+                '$EndMonthNumberShort' => $endDateTime->format('n'), // EndMonthNumberShort
+                '$EndMonthNumberLong' => $endDateTime->format('m'), // EndMonthNumberLong
+                '$EndMonthNameShort' => $endDateTime->format('M'), // EndMonthNameShort
+                '$EndMonthNameLong' => $endDateTime->format('F'), // EndMonthNameLong
+                '$EndYearShort' => $endDateTime->format('y'), // EndYearShort
+                '$EndYearLong' => $endDateTime->format('Y'), // EndYearLong
+            ];
+        }
+        return self::$cache_format_character_replacements[$key];
     }
 
 
