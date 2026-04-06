@@ -1,44 +1,44 @@
 {
-	"name":"sunnysideup/silverstripe-event-calendar",
-	"type": "silverstripe-vendormodule",
-	"description": "Event calendar for the Silverstripe CMS",
-	"keywords": [
-		"silverstripe",
-		"events",
-		"calendar"
-	],
-	"license": "BSD-3-Clause",
-	"authors":[
-		{
-			"name": "Aaron Carlino"
-		},
-		{
-			"name": "Grant Heggie",
-			"email": "grant@grantheggie.design"
-		}
-	],
-	"require": {
-		"silverstripe/cms": "^4.0 || ^5.0",
-		"johngrogg/ics-parser": "*",
-		"nesbot/carbon": "*"
-	},
-	"support": {
-		"issues": "https://github.com/sunnysideup/silverstripe-event-calendar/issues"
-	},
-	"extra": {
-		"expose": [
-			"client"
-		]
-	},
-	"replace": {
-		"silverstripe/event-calendar": "*",
-		"unclecheese/event-calendar": "*"
-	},
-	"minimum-stability": "dev",
-	"prefer-stable": true,
-    "autoload": {
-        "psr-4": {
-            "UncleCheese\\EventCalendar\\": "src/"
-        }
+  "name": "sunnysideup/silverstripe-event-calendar",
+  "type": "silverstripe-vendormodule",
+  "description": "Event calendar for the Silverstripe CMS",
+  "keywords": [
+    "silverstripe",
+    "events",
+    "calendar"
+  ],
+  "license": "BSD-3-Clause",
+  "authors": [
+    {
+      "name": "Aaron Carlino"
+    },
+    {
+      "name": "Grant Heggie",
+      "email": "grant@grantheggie.design"
     }
+  ],
+  "require": {
+    "silverstripe/cms": "^4.0 || ^5.0",
+    "johngrogg/ics-parser": "*",
+    "nesbot/carbon": "*"
+  },
+  "support": {
+    "issues": "https://github.com/sunnysideup/silverstripe-event-calendar/issues"
+  },
+  "extra": {
+    "expose": [
+      "client"
+    ]
+  },
+  "replace": {
+    "silverstripe/event-calendar": "*",
+    "unclecheese/event-calendar": "*"
+  },
+  "minimum-stability": "dev",
+  "prefer-stable": true,
+  "autoload": {
+    "psr-4": {
+      "UncleCheese\\EventCalendar\\": "src/"
+    }
+  }
 }
