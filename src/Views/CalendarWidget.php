@@ -5,7 +5,16 @@ namespace UncleCheese\EventCalendar\Views;
 use SilverStripe\Core\Convert;
 use SilverStripe\Core\Manifest\ModuleResourceLoader;
 use SilverStripe\View\Requirements;
-use SilverStripe\View\ViewableData;
+
+/**
+  * ### @@@@ START REPLACEMENT @@@@ ###
+  * WHY: automated upgrade
+  * OLD: SilverStripe\View\ViewableData
+  * NEW: SilverStripe\Model\ModelData ...  (COMPLEX)
+  * EXP: Removed deprecated class SilverStripe\View\ViewableData - renamed to ModelData. See: https://docs.silverstripe.org/en/6/changelogs/6.0.0/
+  * ### @@@@ STOP REPLACEMENT @@@@ ###
+  */
+use SilverStripe\Model\ModelData;
 use UncleCheese\EventCalendar\Pages\Calendar;
 
 class CalendarWidget extends ViewableData
