@@ -4,3 +4,4 @@ resources/
 vendor/
 
 composer.lock
+.agents/
