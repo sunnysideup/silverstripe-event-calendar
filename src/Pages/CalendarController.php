@@ -34,7 +34,16 @@ use SilverStripe\Forms\NumericField;
 use SilverStripe\Forms\TextField;
 use SilverStripe\Forms\GridField\GridField;
 use SilverStripe\Forms\GridField\GridFieldConfig_RecordEditor;
-use SilverStripe\ORM\ArrayList;
+
+/**
+  * ### @@@@ START REPLACEMENT @@@@ ###
+  * WHY: automated upgrade
+  * OLD: SilverStripe\ORM\ArrayList
+  * NEW: SilverStripe\Model\List\ArrayList ...  (COMPLEX)
+  * EXP: Removed deprecated class SilverStripe\ORM\ArrayList - renamed to ArrayList. See: https://docs.silverstripe.org/en/6/changelogs/6.0.0/
+  * ### @@@@ STOP REPLACEMENT @@@@ ###
+  */
+use SilverStripe\Model\List\ArrayList;
 use SilverStripe\ORM\DataList;
 use SilverStripe\ORM\DataObject;
 use SilverStripe\View\Requirements;
