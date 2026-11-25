@@ -151,7 +151,7 @@ class ICSWriter
      *
      * @author Alex Hayes <alex.hayes@dimension27.com>
      */
-    protected function getFormatedDateTime(DBDate $date = null, DBTime $time = null)
+    protected function getFormatedDateTime(?DBDate $date = null, ?DBTime $time = null)
     {
         $timestamp = null;
         if ($date && $time) {

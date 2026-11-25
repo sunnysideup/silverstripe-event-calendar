@@ -17,7 +17,7 @@ use SilverStripe\View\Requirements;
 use SilverStripe\Model\ModelData;
 use UncleCheese\EventCalendar\Pages\Calendar;
 
-class CalendarWidget extends ViewableData
+class CalendarWidget extends ModelData
 {
     protected $calendar;
 
@@ -59,7 +59,7 @@ class CalendarWidget extends ViewableData
         return $this;
     }
 
-    public function forTemplate()
+    public function forTemplate(): string
     {
         if (!Calendar::config()->jquery_included) {
             Requirements::javascript('sunnysideup/silverstripe-event-calendar:client/dist/js/jquery.min.js');
