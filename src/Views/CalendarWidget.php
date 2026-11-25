@@ -3,21 +3,12 @@
 namespace UncleCheese\EventCalendar\Views;
 
 use SilverStripe\Core\Convert;
-use SilverStripe\Core\Manifest\ModuleResourceLoader;
 use SilverStripe\View\Requirements;
 
-/**
-  * ### @@@@ START REPLACEMENT @@@@ ###
-  * WHY: automated upgrade
-  * OLD: SilverStripe\View\ViewableData
-  * NEW: SilverStripe\Model\ModelData ...  (COMPLEX)
-  * EXP: Removed deprecated class SilverStripe\View\ViewableData - renamed to ModelData. See: https://docs.silverstripe.org/en/6/changelogs/6.0.0/
-  * ### @@@@ STOP REPLACEMENT @@@@ ###
-  */
 use SilverStripe\Model\ModelData;
 use UncleCheese\EventCalendar\Pages\Calendar;
 
-class CalendarWidget extends ViewableData
+class CalendarWidget extends ModelData
 {
     protected $calendar;
 
@@ -29,6 +20,7 @@ class CalendarWidget extends ViewableData
 
     public function __construct(Calendar $calendar)
     {
+        parent::__construct();
         $this->calendar = $calendar;
     }
 
@@ -42,7 +34,11 @@ class CalendarWidget extends ViewableData
         $attributes = "";
         $this->options['url'] = $this->calendar->Link();
         foreach ($this->options as $opt => $value) {
-            $attributes .= sprintf('data-%s="%s" ', $opt, Convert::raw2att($value));
+            $opt = preg_replace('/[^a-z0-9\-]/', '', strtolower((string) $opt));
+            if ($opt === '') {
+                continue;
+            }
+            $attributes .= sprintf('data-%s="%s" ', $opt, Convert::raw2att((string) $value));
         }
         return $attributes;
     }
@@ -59,7 +55,7 @@ class CalendarWidget extends ViewableData
         return $this;
     }
 
-    public function forTemplate()
+    public function forTemplate(): string
     {
         if (!Calendar::config()->jquery_included) {
             Requirements::javascript('sunnysideup/silverstripe-event-calendar:client/dist/js/jquery.min.js');

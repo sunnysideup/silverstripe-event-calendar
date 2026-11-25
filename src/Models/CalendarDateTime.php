@@ -109,7 +109,7 @@ class CalendarDateTime extends DataObject
      */
     public function getDateRange()
     {
-        list($startDate, $endDate) = CalendarUtil::get_date_string($this->StartDate, $this->EndDate);
+        [$startDate, $endDate] = CalendarUtil::get_date_string($this->StartDate, $this->EndDate);
         $templateName = __CLASS__ .'\DateRange';
         return $this->customise(
             [
@@ -136,7 +136,7 @@ class CalendarDateTime extends DataObject
      */
     public function Announcement()
     {
-        return $this->ClassName == CalendarAnnouncement::class;
+        return $this instanceof CalendarAnnouncement;
     }
 
     /**
@@ -197,9 +197,9 @@ class CalendarDateTime extends DataObject
      */
     public function ICSLink()
     {
-        $icsStart = $this->obj('StartDate')->Format('YMMdd')."T".$this->obj('StartTime')->Format('Hmm');
+        $icsStart = $this->getICSTimestamp($this->StartDate, $this->StartTime);
         if ($this->EndDate) {
-            $icsEnd = $this->obj('EndDate')->Format('YMMdd')."T".$this->obj('EndTime')->Format('Hmm');
+            $icsEnd = $this->getICSTimestamp($this->EndDate, $this->EndTime ?: $this->StartTime);
         } else {
             $icsEnd = $icsStart;
         }
@@ -209,13 +209,13 @@ class CalendarDateTime extends DataObject
                 "ics",
                 $this->ID,
                 $icsStart . "-" . $icsEnd,
-                "?title=".urlencode($this->Title)
+                "?title=" . urlencode((string) $this->Title)
             );
         } elseif ($this->Announcement()) {
             return Controller::join_links(
                 $this->Calendar()->Link(),
                 "ics",
-                "announcement-".$this->ID,
+                "announcement-" . $this->ID,
                 $icsStart . "-" . $icsEnd
             );
         }
@@ -228,6 +228,41 @@ class CalendarDateTime extends DataObject
     }
 
     /**
+     * @param string|null $date Y-m-d
+     * @param string|null $time H:i:s
+     * @return string e.g. 20240315T093000
+     */
+    protected function getICSTimestamp($date, $time): string
+    {
+        $timestamp = strtotime(trim((string) $date . ' ' . ((string) $time ?: '00:00:00')));
+        if (!$timestamp) {
+            $timestamp = time();
+        }
+
+        return date('Ymd\THis', $timestamp);
+    }
+
+    /**
+     * Title used for the RSS feed of the calendar
+     *
+     * @return string
+     */
+    public function getRSSItemTitle()
+    {
+        return trim(preg_replace('/\s+/', ' ', strip_tags((string) $this->getDateRange()))) . ' : ' . $this->getTitle();
+    }
+
+    /**
+     * Description used for the RSS feed of the calendar
+     *
+     * @return string
+     */
+    public function getRSSItemDescription()
+    {
+        return $this->getContent();
+    }
+
+    /**
      * @return string
      */
     public function getFormattedStartDate()
@@ -236,8 +271,8 @@ class CalendarDateTime extends DataObject
             return $this->config()->formatted_field_empty_string;
         }
         return CalendarUtil::get_date_format() == "mdy"
-            ? $this->obj('StartDate')->Format('MM-dd-Y')
-            : $this->obj('StartDate')->Format('dd-MM-Y');
+            ? $this->obj('StartDate')->Format('MM-dd-yyyy')
+            : $this->obj('StartDate')->Format('dd-MM-yyyy');
     }
 
     /**
@@ -249,8 +284,8 @@ class CalendarDateTime extends DataObject
             return $this->config()->formatted_field_empty_string;
         }
         return CalendarUtil::get_date_format() == "mdy"
-            ? $this->obj('EndDate')->Format('MM-dd-Y')
-            : $this->obj('EndDate')->Format('dd-MM-Y');
+            ? $this->obj('EndDate')->Format('MM-dd-yyyy')
+            : $this->obj('EndDate')->Format('dd-MM-yyyy');
     }
 
     /**
@@ -308,14 +343,18 @@ class CalendarDateTime extends DataObject
      */
     public function getAllDatesInRange()
     {
+        if (!$this->StartDate) {
+            return [];
+        }
         $start = new \DateTime($this->StartDate);
-        $end = new \DateTime($this->EndDate);
+        $end = new \DateTime($this->EndDate ?: $this->StartDate);
         $end = $end->getTimestamp();
         $dates = [];
+        $max = 3660;
         do {
             $dates[] = $start->format('Y-m-d');
             $start->add(new \DateInterval('P1D'));
-        } while ($start->getTimestamp() <= $end);
+        } while ($start->getTimestamp() <= $end && --$max > 0);
 
         return $dates;
     }

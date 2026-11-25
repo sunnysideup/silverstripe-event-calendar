@@ -18,9 +18,12 @@
         }
     ],
     "require": {
+        "php": "^8.3",
+        "silverstripe/framework": "^6.0",
         "silverstripe/cms": "^6.0",
-        "johngrogg/ics-parser": "*",
-        "nesbot/carbon": "*"
+        "silverstripe/versioned": "^3.0",
+        "johngrogg/ics-parser": "^3.4",
+        "nesbot/carbon": "^3.0"
     },
     "support": {
         "issues": "https://github.com/sunnysideup/silverstripe-event-calendar/issues"

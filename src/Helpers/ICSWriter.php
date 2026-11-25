@@ -8,7 +8,7 @@
  *
  * <code>
  * $writer = new ICSWriter($this->data(), Director::absoluteURL('/'));
- * $writer->sendDownload();
+ * return $writer->sendDownload();
  * </code>
  *
  * <h3>Get output</h3>
@@ -27,9 +27,8 @@
 namespace UncleCheese\EventCalendar\Helpers;
 
 use SilverStripe\Control\Director;
+use SilverStripe\Control\HTTPResponse;
 use SilverStripe\Core\Injector\Injectable;
-use SilverStripe\ORM\FieldType\DBDate;
-use SilverStripe\ORM\FieldType\DBTime;
 use UncleCheese\EventCalendar\Models\CalendarDateTime;
 use UncleCheese\EventCalendar\Pages\Calendar;
 
@@ -70,19 +69,23 @@ class ICSWriter
         $this->limit = $limit;
     }
 
+    /**
+     * Get an HTTP response that downloads the calendar. Return it from your controller action.
+     *
+     * @return HTTPResponse
+     */
     public function sendDownload()
     {
-        header("Cache-Control: private");
-        header("Content-Description: File Transfer");
-        header("Content-Type: text/calendar");
-        header("Content-Transfer-Encoding: binary");
-        $filename = preg_replace("/[^a-zA-Z0-9s]/", "", $this->calendar->Title) . '.ics';
-        if (stristr($_SERVER['HTTP_USER_AGENT'], "MSIE")) {
-            header("Content-disposition: filename=" . $filename . "; attachment;");
-        } else {
-            header("Content-disposition: attachment; filename=" . $filename);
+        $filename = preg_replace('/[^a-zA-Z0-9]/', '', (string) $this->calendar->Title);
+        if ($filename === '') {
+            $filename = 'calendar';
         }
-        echo $this->getOutput();
+
+        return HTTPResponse::create($this->getOutput())
+            ->addHeader('Cache-Control', 'private')
+            ->addHeader('Content-Description', 'File Transfer')
+            ->addHeader('Content-Type', 'text/calendar; charset=utf-8')
+            ->addHeader('Content-Disposition', 'attachment; filename="' . $filename . '.ics"');
     }
 
     /**
@@ -98,9 +101,9 @@ class ICSWriter
         $this->addLine('VERSION:2.0');
 
         if (is_null($this->prodid)) {
-            $this->addLine("PRODID:" . '-//'.$this->host.'//NONSGML v1.0//EN');
-        } elseif (!is_null($this->prodid)) {
-            $this->addLine("PRODID:" . $this->prodid);
+            $this->addLine("PRODID:" . '-//' . $this->cleanValue($this->host) . '//NONSGML v1.0//EN');
+        } else {
+            $this->addLine("PRODID:" . $this->cleanValue($this->prodid));
         }
 
         $upcomingEvents = $this->calendar->UpcomingEvents($this->limit);
@@ -111,7 +114,7 @@ class ICSWriter
 
         $this->addLine('END:VCALENDAR');
 
-        return implode("\r\n", $this->lines);
+        return implode("\r\n", $this->lines) . "\r\n";
     }
 
     /**
@@ -128,6 +131,14 @@ class ICSWriter
     }
 
     /**
+     * Strip anything that could break out of the current iCalendar line.
+     */
+    protected function cleanValue($value): string
+    {
+        return preg_replace('/[\x00-\x1F\x7F]/', '', (string) $value) ?? '';
+    }
+
+    /**
      *
      *
      * @param CalendarDateTime $dateTime
@@ -137,26 +148,31 @@ class ICSWriter
      */
     protected function getUID(CalendarDateTime $dateTime)
     {
-        return $dateTime->ID.'@'.$this->host;
+        $id = is_numeric($dateTime->ID)
+            ? $dateTime->ID
+            : ($dateTime->DateTimeID ?: $dateTime->ID) . '-' . $dateTime->StartDate;
+
+        return $this->cleanValue($id . '@' . $this->host);
     }
 
     /**
-     * Get an ical formatted datetime string.
+     * Get an ical formatted datetime string (in UTC).
      *
-     * @param DBDate $date
-     * @param DBTime $time
+     * @param string|null $date Y-m-d
+     * @param string|null $time H:i:s
      * @return string
      *
      * @todo Add timezone support - note atm there is no timezone support in either Date or Time.
      *
      * @author Alex Hayes <alex.hayes@dimension27.com>
      */
-    protected function getFormatedDateTime(DBDate $date = null, DBTime $time = null)
+    protected function getFormatedDateTime(?string $date = null, ?string $time = null)
     {
         $timestamp = null;
-        if ($date && $time) {
-            $timestamp = strtotime((string) $date . ' ' . $time);
-        } else {
+        if ($date) {
+            $timestamp = strtotime($date . ' ' . ($time ?: '00:00:00'));
+        }
+        if (!$timestamp) {
             $timestamp = time();
         }
         return gmdate('Ymd\THis\Z', $timestamp);
@@ -172,13 +188,18 @@ class ICSWriter
      */
     protected function addDateTime(CalendarDateTime $dateTime)
     {
+        $startDate = $dateTime->StartDate;
+        $endDate = $dateTime->EndDate ?: $startDate;
+        $startTime = $dateTime->AllDay ? null : $dateTime->StartTime;
+        $endTime = $dateTime->AllDay ? null : ($dateTime->EndTime ?: $dateTime->StartTime);
+
         $this->addLine('BEGIN:VEVENT');
         $this->addLine('UID:' . $this->getUID($dateTime));
-        $this->addLine('DTSTAMP;TZID=' . Calendar::config()->timezone . ':' . $this->getFormatedDateTime());
-        $this->addLine('DTSTART;TZID=' . Calendar::config()->timezone . ':' . $this->getFormatedDateTime($dateTime->dbObject('StartDate'), $dateTime->dbObject('StartTime')));
-        $this->addLine('DTEND;TZID='   . Calendar::config()->timezone . ':' . $this->getFormatedDateTime($dateTime->dbObject('EndDate'), $dateTime->dbObject('EndTime')));
-        $this->addLine('URL:' . Director::absoluteURL($dateTime->ICSLink()));
-        $this->addLine('SUMMARY:CHARSET=UTF-8:' . $dateTime->Event()->Title);
+        $this->addLine('DTSTAMP:' . $this->getFormatedDateTime());
+        $this->addLine('DTSTART:' . $this->getFormatedDateTime($startDate, $startTime));
+        $this->addLine('DTEND:' . $this->getFormatedDateTime($endDate, $endTime));
+        $this->addLine('URL:' . $this->cleanValue(Director::absoluteURL($dateTime->ICSLink())));
+        $this->addLine('SUMMARY:' . CalendarUtil::escape_ics_text($dateTime->getTitle()));
         $this->addLine('END:VEVENT');
     }
 }

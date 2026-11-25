@@ -29,7 +29,7 @@ class CachedCalendarEntry extends DataObject
         'Announcement'	=> 'Boolean',
         'DateRange'		=> 'HTMLText',
         'TimeRange'		=> 'HTMLText',
-        'ICSLink'		=> 'Varchar(100)',
+        'ICSLink'		=> 'Varchar(255)',
         'Title'			=> 'Varchar(255)',
         'Content'		=> 'HTMLText'
     ];
@@ -39,7 +39,7 @@ class CachedCalendarEntry extends DataObject
         'Calendar'			=> Calendar::class,
         'Event'				=> CalendarEvent::class
     ];
-    
+
     private static $default_sort = "StartDate ASC, StartTime ASC";
 
     /**
@@ -65,7 +65,7 @@ class CachedCalendarEntry extends DataObject
     }
 
     /**
-     * @return \SilverStripe\ORM\DataList
+     * @return \SilverStripe\ORM\DataList|false
      */
     public function OtherDates()
     {
@@ -90,8 +90,8 @@ class CachedCalendarEntry extends DataObject
         foreach ($dt->config()->has_one as $field => $type) {
             $this->{$field."ID"} = $dt->{$field."ID"};
         }
-        $this->DateRange = $dt->DateRange();
-        $this->TimeRange = $dt->TimeRange();
+        $this->DateRange = (string) $dt->getDateRange();
+        $this->TimeRange = (string) $dt->getTimeRange();
         $this->ICSLink = $dt->ICSLink();
         $this->Title = $dt->getTitle();
         $this->Content = $dt->getContent();

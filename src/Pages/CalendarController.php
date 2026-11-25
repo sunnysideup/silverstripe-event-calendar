@@ -12,39 +12,22 @@ namespace UncleCheese\EventCalendar\Pages;
 
 use Carbon\Carbon;
 use Carbon\CarbonInterface;
-use Carbon\CarbonInterval;
 use UncleCheese\EventCalendar\Helpers\CalendarUtil;
-use UncleCheese\EventCalendar\Pages\Calendar;
 use UncleCheese\EventCalendar\Helpers\ICSWriter;
-
 use UncleCheese\EventCalendar\Models\Region;
-use SilverStripe\Control\Controller;
+use Error;
+use SilverStripe\CMS\Model\SiteTree;
 use SilverStripe\Control\Director;
 use SilverStripe\Control\Email\Email;
 use SilverStripe\Control\HTTP;
 use SilverStripe\Control\HTTPRequest;
+use SilverStripe\Control\HTTPResponse;
 use SilverStripe\Control\RSS\RSSFeed;
-use SilverStripe\Core\Convert;
-use SilverStripe\Forms\CheckboxSetField;
 use SilverStripe\Forms\DropdownField;
 use SilverStripe\Forms\FieldList;
 use SilverStripe\Forms\Form;
 use SilverStripe\Forms\FormAction;
-use SilverStripe\Forms\NumericField;
-use SilverStripe\Forms\TextField;
-use SilverStripe\Forms\GridField\GridField;
-use SilverStripe\Forms\GridField\GridFieldConfig_RecordEditor;
 
-/**
-  * ### @@@@ START REPLACEMENT @@@@ ###
-  * WHY: automated upgrade
-  * OLD: SilverStripe\ORM\ArrayList
-  * NEW: SilverStripe\Model\List\ArrayList ...  (COMPLEX)
-  * EXP: Removed deprecated class SilverStripe\ORM\ArrayList - renamed to ArrayList. See: https://docs.silverstripe.org/en/6/changelogs/6.0.0/
-  * ### @@@@ STOP REPLACEMENT @@@@ ###
-  */
-use SilverStripe\Model\List\ArrayList;
-use SilverStripe\ORM\DataList;
 use SilverStripe\ORM\DataObject;
 use SilverStripe\View\Requirements;
 use PageController;
@@ -55,7 +38,6 @@ class CalendarController extends PageController
         'show',
         'region',
         'month',
-        'year',
         'rss',
         'today',
         'week',
@@ -70,6 +52,13 @@ class CalendarController extends PageController
      * @var string
      */
     private static $default_organiser;
+
+    /**
+     * The most events that can be requested in one go (e.g. by the monthjson action)
+     *
+     * @var int
+     */
+    private static $max_events_per_page = 500;
 
     protected $view;
 
@@ -87,6 +76,11 @@ class CalendarController extends PageController
      * @var Region
      */
     protected $region;
+
+    /**
+     * @var int|null
+     */
+    protected $eventsPerPageOverride;
 
     public function init()
     {
@@ -107,40 +101,35 @@ class CalendarController extends PageController
 
     public function index(HTTPRequest $r)
     {
-
         $this->extend('index', $r);
 
         switch ($this->DefaultView) {
             case "month":
-                return $this->redirect($this->Link('show/month'));
+                $this->setMonthView();
+                return $this->respond();
             case "week":
                 $this->setWeekView();
                 // prevent pagination on these default views
-                $this->EventsPerPage = 999;
+                $this->eventsPerPageOverride = 999;
                 $e = $this->getEvents();
                 if ($e->count() > 0) {
                     return ['Events' => $e];
-                } else {
-                    $this->setMonthView();
-                    return [];
                 }
-                break;
+                $this->setMonthView();
+                return [];
             case "today":
                 // prevent pagination on these default views
-                $this->EventsPerPage = 999;
+                $this->eventsPerPageOverride = 999;
                 $this->setTodayView();
                 $e = $this->getEvents();
                 if ($e->count() > 0) {
                     return ['Events' => $e];
-                } else {
-                    $this->setWeekView();
-                    return [];
                 }
-                break;
+                $this->setWeekView();
+                return [];
             default:
                 $this->setDefaultView();
                 return $this->respond();
-                break;
         }
     }
 
@@ -170,9 +159,11 @@ class CalendarController extends PageController
 
     public function region(HTTPRequest $r)
     {
-        $regionTitle = urldecode(Convert::raw2sql($r->param('ID')));
-        $filter = ['Title' => $regionTitle];
-        $this->region = Region::get()->filter($filter)->first();
+        $regionTitle = rawurldecode((string) $r->param('ID'));
+        $this->region = Region::get()->filter(['Title' => $regionTitle])->first();
+        if (!$this->region) {
+            return $this->httpError(404);
+        }
         $this->setRegionView();
         return $this->respond();
     }
@@ -187,64 +178,49 @@ class CalendarController extends PageController
     {
         $this->setDefaultView();
         $events = $this->getEvents();
-        foreach ($events as $event) {
-            $event->Title = strip_tags($event->DateRange()) . " : " . $event->getTitle();
-            $event->Description = $event->getContent();
-        }
         $rssTitle = $this->RSSTitle
             ? $this->RSSTitle
             : sprintf(
                 _t(Calendar::class.'.UPCOMINGEVENTSFOR', "Upcoming Events for %s"),
                 $this->Title
             );
-        $rss = RSSFeed::create($events, $this->Link(), $rssTitle, "", "Title", "Description");
+        $rss = RSSFeed::create($events, $this->Link(), $rssTitle, "", "RSSItemTitle", "RSSItemDescription");
         return $rss->outputToBrowser();
-        // $xml = str_replace('&nbsp;', '&#160;', $rss->renderWith('SilverStripe\Control\RSS\RSSFeed'));
-        // $xml = preg_replace('/<!--(.|\s)*?-->/', '', $xml);
-
-        // $xml = trim((string) $xml);
-        // return $this->getResponse()
-        //     ->addHeader('Content-Type', 'application/rss+xml')
-        //     ->addHeader('ETag', $rss->etag)
-        //     ->addHeader('Last-Modified', gmdate("D, d M Y H:i:s", $rss->lastModified) . ' GMT')
-        //     ->setBody($xml);
     }
 
     /**
-     * @return string
+     * @return HTTPResponse
      */
     public function monthjson(HTTPRequest $r)
     {
         $json = [];
-        if (!$r->param('ID')) {
-            return json_encode($json);
-        }
-        //Increase the per page limit to 500 as the AJAX request won't look for further pages
-        $this->EventsPerPage = 500;
-        $this->startDate = Carbon::parse(
-            CalendarUtil::get_date_from_string($r->param('ID'))
-        );
-        $this->endDate = Carbon::parse($this->startDate)->endOfMonth();
+        if ($r->param('ID')) {
+            // the AJAX request won't look for further pages
+            $this->eventsPerPageOverride = (int) $this->config()->max_events_per_page;
+            $this->startDate = Carbon::parse(
+                CalendarUtil::get_date_from_string($r->param('ID'))
+            )->startOfMonth();
+            $this->endDate = $this->startDate->copy()->endOfMonth();
 
-
-        $counter = clone $this->startDate;
-        while ($counter->getTimestamp() <= $this->endDate->getTimestamp()) {
-            $d = $counter->toDateString();
-            $json[$d] = [
-                'events' => []
-            ];
-            $counter->addDay();
-        }
-        $list = $this->getEvents();
-        foreach ($list as $e) {
-            foreach ($e->getAllDatesInRange() as $date) {
-                if (isset($json[$date])) {
-                    $json[$date]['events'][] = $e->getTitle();
+            $counter = $this->startDate->copy();
+            while ($counter->getTimestamp() <= $this->endDate->getTimestamp()) {
+                $json[$counter->toDateString()] = [
+                    'events' => []
+                ];
+                $counter->addDay();
+            }
+            foreach ($this->getEvents() as $e) {
+                foreach ($e->getAllDatesInRange() as $date) {
+                    if (isset($json[$date])) {
+                        $json[$date]['events'][] = $e->getTitle();
+                    }
                 }
             }
         }
 
-        return json_encode($json);
+        return HTTPResponse::create(json_encode($json, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT))
+            ->addHeader('Content-Type', 'application/json; charset=utf-8')
+            ->addHeader('X-Content-Type-Options', 'nosniff');
     }
 
     /**
@@ -266,6 +242,19 @@ class CalendarController extends PageController
     public function getView()
     {
         return $this->view;
+    }
+
+    /**
+     * @return int
+     */
+    public function getEventsPerPage()
+    {
+        if ($this->eventsPerPageOverride) {
+            return $this->eventsPerPageOverride;
+        }
+        $perPage = (int) $this->data()->EventsPerPage;
+
+        return $perPage > 0 ? $perPage : 10;
     }
 
     public function setDefaultView()
@@ -292,41 +281,43 @@ class CalendarController extends PageController
     public function setWeekView()
     {
         $this->view = 'week';
-        $this->startDate = Carbon::now()->startOfWeek();
-        $this->endDate = Carbon::now()->endOfWeek();
         if (CalendarUtil::get_first_day_of_week() == CarbonInterface::MONDAY) {
-            $this->startDate = $this->startDate->tomorrow();
-            $this->endDate = $this->endDate->tomorrow();
+            $this->startDate = Carbon::now()->startOfWeek(CarbonInterface::MONDAY);
+            $this->endDate = Carbon::now()->endOfWeek(CarbonInterface::SUNDAY);
+        } else {
+            $this->startDate = Carbon::now()->startOfWeek(CarbonInterface::SUNDAY);
+            $this->endDate = Carbon::now()->endOfWeek(CarbonInterface::SATURDAY);
         }
     }
-
 
     public function setWeekendView()
     {
         $this->view = 'weekend';
         $start = Carbon::now();
-        if ($start->format('w') == CarbonInterface::SATURDAY) {
-            $start = $start->yesterday();
-        } elseif ($start->format('w') != CarbonInterface::FRIDAY) {
+        if ($start->dayOfWeek == CarbonInterface::SATURDAY) {
+            $start = $start->subDay();
+        } elseif ($start->dayOfWeek == CarbonInterface::SUNDAY) {
+            $start = $start->subDays(2);
+        } elseif ($start->dayOfWeek != CarbonInterface::FRIDAY) {
             $start = $start->next(CarbonInterface::FRIDAY);
         }
         $this->startDate = $start;
-        $this->endDate = Carbon::parse($this->startDate)->next(CarbonInterface::SUNDAY);
+        $this->endDate = $this->startDate->copy()->next(CarbonInterface::SUNDAY);
     }
 
     public function setMonthView()
     {
         $this->view = 'month';
         $this->startDate = Carbon::now()->startOfMonth();
-        $this->endDate = Carbon::parse($this->startDate)->endOfMonth();
+        $this->endDate = $this->startDate->copy()->endOfMonth();
     }
 
+    /**
+     * @return int
+     */
     public function getOffset()
     {
-        if (!isset($_REQUEST['start'])) {
-            $_REQUEST['start'] = 0;
-        }
-        return (int)$_REQUEST['start'];
+        return max(0, (int) $this->getRequest()->getVar('start'));
     }
 
     protected function getRangeLink($start, $end)
@@ -341,8 +332,8 @@ class CalendarController extends PageController
 
     public function respond()
     {
-        if (Director::is_ajax()) {
-            return $this->renderWith('EventList');
+        if ($this->getRequest()->isAjax()) {
+            return $this->renderWith('UncleCheese\EventCalendar\Includes\EventList');
         }
         return [];
     }
@@ -353,97 +344,106 @@ class CalendarController extends PageController
      * @todo Support recurring events.
      * @see ICSWriter
      * @author Alex Hayes <alex.hayes@dimension27.com>
+     * @return HTTPResponse
      */
     public function ical()
     {
-        $writer = ICSWriter::create($this->data(), Director::absoluteURL('/'));
-        $writer->sendDownload();
+        $host = (string) parse_url(Director::absoluteBaseURL(), PHP_URL_HOST);
+        $writer = ICSWriter::create($this->data(), $host);
+        return $writer->sendDownload();
     }
 
     /**
-     * @return string
+     * Download a single event as an ICS file
+     *
+     * @return HTTPResponse
      */
     public function ics(HTTPRequest $r)
     {
         $feed = false;
         $announcement = false;
-        $id = $r->param('ID');
-        $oid = $r->param('OtherID');
+        $id = (string) $r->param('ID');
+        $oid = (string) $r->param('OtherID');
 
-        if (stristr($id, "ICS_") !== false) {
-            $id = str_replace("ICS_", "", $id);
+        if (stripos($id, "ICS_") === 0) {
+            $id = substr($id, 4);
             $feed = true;
-        } elseif (stristr($id, "announcement-") !== false) {
-            $id = str_replace("announcement-", "", $id);
+        } elseif (stripos($id, "announcement-") === 0) {
+            $id = substr($id, 13);
             $announcement = true;
         }
-        if (is_numeric($id) && $oid) {
-            if (!$feed) {
-                $event = DataObject::get(
-                    $announcement ? $this->data()->getDateTimeClass() : $this->data()->getEventClass()
-                )->byID($id);
-                if (!$event) {
-                    // No event found
-                    return $this->httpError(404);
+
+        $timestampPattern = '\d{8}T\d{4}(?:\d{2})?';
+        if (!ctype_digit($id) || !preg_match('/^(' . $timestampPattern . ')-(' . $timestampPattern . ')$/', $oid, $parts)) {
+            return $this->httpError(404);
+        }
+        $startTimestamp = $parts[1];
+        $endTimestamp = $parts[2];
+
+        $calendar = $this->data();
+        $event = null;
+        if ($feed) {
+            if (!$calendar->Feeds()->byID((int) $id)) {
+                return $this->httpError(404);
+            }
+            $filename = $r->getVar('title');
+            $title = $r->getVar('title');
+            $content = $r->getVar('content');
+            $location = $r->getVar('location');
+            $url = '';
+        } else {
+            if ($announcement) {
+                $event = DataObject::get($calendar->getAnnouncementClass())
+                    ->filter('CalendarID', $calendar->ID)
+                    ->byID((int) $id);
+            } else {
+                $event = DataObject::get($calendar->getEventClass())->byID((int) $id);
+                if ($event && !$event->canView()) {
+                    $event = null;
                 }
-                $FILENAME = $announcement ? preg_replace("/[^a-zA-Z0-9s]/", "", $event->Title) : $event->URLSegment;
-            } else {
-                $FILENAME = preg_replace("/[^a-zA-Z0-9s]/", "", urldecode($_REQUEST['title']));
             }
-
-            $FILENAME .= ".ics";
-            $HOST = $_SERVER['HTTP_HOST'];
-            $TIMEZONE = Calendar::config()->timezone;
-            $LANGUAGE = Calendar::config()->language;
-            $CALSCALE = "GREGORIAN";
-            $parts = explode('-', $oid);
-            $START_TIMESTAMP = $parts[0];
-            $END_TIMESTAMP = $parts[1];
-            if (!$feed) {
-                $URL = $announcement ? $event->Calendar()->AbsoluteLink() : $event->AbsoluteLink();
-            } else {
-                $URL = "";
+            if (!$event) {
+                return $this->httpError(404);
             }
-            $UID = sprintf('%s-%s@%s', $r->param('ID'), $r->param('OtherID'), $HOST);
-            $TITLE = $feed ? $_REQUEST['title'] : $event->Title;
-            $CONTENT = $feed ? $_REQUEST['content'] : $event->obj('Content')->Summary();
-            $LOCATION = $feed ? $_REQUEST['location'] : $event->Location;
-            $ORGANIZER = $this->getOrganiser();
-
-            $this->getResponse()
-                ->addHeader('Cache-Control', 'private')
-                ->addHeader('Content-Description', 'File Transfer')
-                ->addHeader('Content-Type', 'text/calendar')
-                ->addHeader('Content-Transfer-Encoding', 'binary');
-
-            if (stristr($_SERVER['HTTP_USER_AGENT'], "MSIE")) {
-                $this->getResponse()->addHeader("Content-disposition", "filename=".$FILENAME."; attachment;");
-            } else {
-                $this->getResponse()->addHeader("Content-disposition", "attachment; filename=".$FILENAME);
-            }
-
-            $result = trim((string) strip_tags($this->customise(
-                [
-                    'HOST' => $HOST,
-                    'LANGUAGE' => $LANGUAGE,
-                    'TIMEZONE' => $TIMEZONE,
-                    'CALSCALE' => $CALSCALE,
-                    'UID' => $UID,
-                    'DTSTAMP' => date("Ymd\THis"),
-                    'START_TIMESTAMP' => $START_TIMESTAMP,
-                    'END_TIMESTAMP' => $END_TIMESTAMP,
-                    'URL' => $URL,
-                    'TITLE' => $TITLE,
-                    'CONTENT' => $CONTENT,
-                    'LOCATION' => $LOCATION,
-                    'ORGANIZER' => 	$ORGANIZER
-                ]
-            )->renderWith(['UncleCheese\EventCalendar\ics'])));
-
-            return $result;
+            $filename = $announcement ? $event->Title : $event->URLSegment;
+            $title = $event->Title;
+            $content = $announcement ? $event->Content : $event->obj('Content')->Summary();
+            $location = $announcement ? '' : $event->Location;
+            $url = $announcement ? $event->Calendar()->AbsoluteLink() : $event->AbsoluteLink();
         }
 
-        return $this->redirectBack();
+        $filename = preg_replace('/[^a-zA-Z0-9]/', '', mb_substr((string) $filename, 0, 100));
+        if ($filename === '') {
+            $filename = 'event';
+        }
+
+        $host = (string) parse_url(Director::absoluteBaseURL(), PHP_URL_HOST);
+        $host = preg_replace('/[^a-zA-Z0-9.\-]/', '', $host);
+
+        $result = $this->customise(
+            [
+                'HOST' => $host,
+                'LANGUAGE' => preg_replace('/[^a-zA-Z_\-]/', '', (string) Calendar::config()->language),
+                'TIMEZONE' => preg_replace('/[^a-zA-Z0-9_\/+\-]/', '', (string) Calendar::config()->timezone),
+                'UID' => sprintf('%s-%s@%s', $id, $oid, $host),
+                'DTSTAMP' => gmdate("Ymd\THis\Z"),
+                'START_TIMESTAMP' => $startTimestamp,
+                'END_TIMESTAMP' => $endTimestamp,
+                'URL' => preg_replace('/[\x00-\x20\x7F]/', '', (string) $url),
+                'TITLE' => CalendarUtil::escape_ics_text(mb_substr((string) $title, 0, 255)),
+                'CONTENT' => CalendarUtil::escape_ics_text(mb_substr((string) $content, 0, 1000)),
+                'LOCATION' => CalendarUtil::escape_ics_text(mb_substr((string) $location, 0, 255)),
+                'ORGANIZER' => preg_replace('/[\x00-\x1F\x7F]/', '', (string) $this->getOrganiser())
+            ]
+        )->renderWith(['UncleCheese\EventCalendar\ics']);
+
+        $body = preg_replace("/\r\n|\r|\n/", "\r\n", trim((string) $result)) . "\r\n";
+
+        return HTTPResponse::create($body)
+            ->addHeader('Cache-Control', 'private')
+            ->addHeader('Content-Description', 'File Transfer')
+            ->addHeader('Content-Type', 'text/calendar; charset=utf-8')
+            ->addHeader('Content-Disposition', 'attachment; filename="' . $filename . '.ics"');
     }
 
     /**
@@ -455,18 +455,25 @@ class CalendarController extends PageController
             return;
         }
         $this->startDate = Carbon::parse(CalendarUtil::get_date_from_string($r->param('ID')));
-        $d = clone $this->startDate;
+        $d = $this->startDate->copy();
         if ($r->param('OtherID')) {
             $this->view = "range";
             $this->endDate = Carbon::parse(CalendarUtil::get_date_from_string($r->param('OtherID')));
-        } elseif($r->param('Action') === 'region') {
+            if ($this->endDate < $this->startDate) {
+                $this->endDate = $this->startDate->copy();
+            }
+            $latest = $this->startDate->copy()->addDays(max(1, (int) Calendar::config()->max_date_range_days));
+            if ($this->endDate > $latest) {
+                $this->endDate = $latest;
+            }
+        } elseif ($r->param('Action') === 'region') {
             $this->view = "region";
             $this->endDate = Carbon::parse($d->addMonths($this->DefaultFutureMonths)->toDateString());
         } else {
-            switch (strlen(str_replace("-", "", $r->param('ID')))) {
+            switch (strlen(str_replace("-", "", (string) $r->param('ID')))) {
                 case 8:
                     $this->view = "day";
-                    $this->endDate = Carbon::createFromTimestamp($d->getTimestamp() + 1);
+                    $this->endDate = $d->copy()->endOfDay();
                     break;
 
                 case 6:
@@ -476,7 +483,7 @@ class CalendarController extends PageController
 
                 case 4:
                     $this->view = "year";
-                    $this->endDate = Carbon::parse($d->endOfMonth()->toDateString());
+                    $this->endDate = Carbon::parse($d->endOfYear()->toDateString());
                     break;
 
                 default:
@@ -493,10 +500,21 @@ class CalendarController extends PageController
         $announcementFilter = null;
         $endDate = $this->endDate;
 
-        if ($search = $this->getRequest()->getVar('s')) {
-            $s = Convert::raw2sql($search);
-            $eventFilter = "\"SiteTree\".\"Title\" LIKE '%$s%' OR \"SiteTree\".\"Content\" LIKE '%$s%'";
-            $announcementFilter = "\"CalendarAnnouncement\".\"Title\" LIKE '%$s%' OR \"CalendarAnnouncement\".\"Content\" LIKE '%$s%'";
+        $search = $this->getRequest()->getVar('s');
+        if (is_string($search) && trim($search) !== '') {
+            $search = mb_substr(trim($search), 0, 100);
+            $like = '%' . $search . '%';
+            $siteTreeTable = SiteTree::config()->table_name;
+            $schema = DataObject::getSchema();
+            $announcementClass = $this->data()->getAnnouncementClass();
+            $announcementTitle = '"' . $schema->tableForField($announcementClass, 'Title') . '"."Title"';
+            $announcementContent = '"' . $schema->tableForField($announcementClass, 'Content') . '"."Content"';
+            $eventFilter = [
+                "\"$siteTreeTable\".\"Title\" LIKE ? OR \"$siteTreeTable\".\"Content\" LIKE ?" => [$like, $like]
+            ];
+            $announcementFilter = [
+                "$announcementTitle LIKE ? OR $announcementContent LIKE ?" => [$like, $like]
+            ];
             $this->SearchQuery = $search;
             $endDate = Carbon::now()->addMonths($this->DefaultFutureMonths);
         }
@@ -509,16 +527,17 @@ class CalendarController extends PageController
             $announcementFilter
         );
 
+        if ($this->region) {
+            $eventIds = $this->region->CalendarEvents()->columnUnique('ID') ?: [-1];
+            $all = $all->filter(['EventID' => $eventIds]);
+        }
+
+        $perPage = $this->getEventsPerPage();
         $allEventsCount = $all->count();
-        $list = $all->limit($this->EventsPerPage, $this->getOffset());
-        $next = $this->getOffset() + $this->EventsPerPage;
+        $list = $all->limit($perPage, $this->getOffset());
+        $next = $this->getOffset() + $perPage;
         $this->MoreEvents = ($next < $allEventsCount);
         $this->MoreLink = HTTP::setGetVar("start", $next);
-
-        if($this->region) {
-            $eventIds = [-1 => 0] + $this->region->CalendarEvents()->columnUnique('ID');
-            $list = $list->filter(['EventID' => $eventIds]);
-        }
 
         return $list;
     }
@@ -530,7 +549,7 @@ class CalendarController extends PageController
     {
         switch ($this->view) {
             case 'region':
-                return $this->region->Title;
+                return $this->region ? $this->region->Title : $this->DefaultDateHeader;
             case "day":
                 return CalendarUtil::localize(
                     $this->startDate->getTimestamp(),
@@ -552,11 +571,13 @@ class CalendarController extends PageController
             case "range":
             case "week":
             case "weekend":
-                list($strStartDate, $strEndDate) = CalendarUtil::get_date_string(
+                [$strStartDate, $strEndDate] = CalendarUtil::get_date_string(
                     $this->startDate->toDateString(),
                     $this->endDate->toDateString()
                 );
-                return $strStartDate.$strEndDate;
+                return $strEndDate
+                    ? $strStartDate . CalendarUtil::config()->get('start_end_separator') . $strEndDate
+                    : $strStartDate;
 
             default:
                 return $this->DefaultDateHeader;
@@ -576,7 +597,7 @@ class CalendarController extends PageController
      */
     public function PreviousDayLink()
     {
-        $start = Carbon::parse($this->startDate)->yesterday();
+        $start = Carbon::parse($this->startDate)->subDay();
         return $this->getRangeLink($start, $start);
     }
 
@@ -585,7 +606,7 @@ class CalendarController extends PageController
      */
     public function NextDayLink()
     {
-        $start = Carbon::parse($this->startDate)->tomorrow();
+        $start = Carbon::parse($this->startDate)->addDay();
         return $this->getRangeLink($start, $start);
     }
 
@@ -614,8 +635,8 @@ class CalendarController extends PageController
      */
     public function NextMonthLink()
     {
-        $start = Carbon::parse($this->startDate)->addMonth();
-        $end = Carbon::parse($start)->endOfMonth();
+        $start = Carbon::parse($this->startDate)->startOfMonth()->addMonth();
+        $end = $start->copy()->endOfMonth();
         return $this->getRangeLink($start, $end);
     }
 
@@ -624,8 +645,8 @@ class CalendarController extends PageController
      */
     public function PreviousMonthLink()
     {
-        $start = Carbon::parse($this->startDate)->subMonth();
-        $end = Carbon::parse($start)->endOfMonth();
+        $start = Carbon::parse($this->startDate)->startOfMonth()->subMonth();
+        $end = $start->copy()->endOfMonth();
         return $this->getRangeLink($start, $end);
     }
 
@@ -650,26 +671,29 @@ class CalendarController extends PageController
      */
     public function IsSegment($segment)
     {
+        if (!$this->startDate || !$this->endDate) {
+            return false;
+        }
         switch ($segment) {
             case "today":
                 return $this->startDate->toDateString() == $this->endDate->toDateString();
             case "week":
                 if (CalendarUtil::get_first_day_of_week() == CarbonInterface::MONDAY) {
                     return
-                        ($this->startDate->format('w') == CarbonInterface::MONDAY)
-                        && ($this->startDate->format('w') == CarbonInterface::SUNDAY);
+                        ($this->startDate->dayOfWeek == CarbonInterface::MONDAY)
+                        && ($this->endDate->dayOfWeek == CarbonInterface::SUNDAY);
                 }
                 return
-                    ($this->startDate->format('w') == CarbonInterface::SUNDAY)
-                    && ($this->endDate->format('w') == CarbonInterface::SATURDAY);
+                    ($this->startDate->dayOfWeek == CarbonInterface::SUNDAY)
+                    && ($this->endDate->dayOfWeek == CarbonInterface::SATURDAY);
             case "month":
                 return
-                    ($this->startDate->format('j') == 1)
-                    && (Carbon::parse($this->startDate)->endOfMonth()->format('j') == $this->endDate->format('j'));
+                    ($this->startDate->day == 1)
+                    && ($this->startDate->copy()->endOfMonth()->day == $this->endDate->day);
             case "weekend":
                 return
-                    ($this->startDate->format('w') == CarbonInterface::FRIDAY)
-                    && ($this->endDate->format('w') == CarbonInterface::SUNDAY);
+                    ($this->startDate->dayOfWeek == CarbonInterface::FRIDAY)
+                    && ($this->endDate->dayOfWeek == CarbonInterface::SUNDAY);
         }
         return false;
     }
@@ -687,14 +711,19 @@ class CalendarController extends PageController
      */
     public function MonthJumpForm()
     {
-        $this->parseURL($this->getRequest());
-        $dummy = Carbon::parse($this->startDate);
-        $yearRange = range(($dummy->subYears(3)->format('Y')), ($dummy->addYears(6)->format('Y')));
+        try {
+            $request = $this->getRequest();
+        } catch (Error $e) {
+            $request = Director::currentRequest() ?: HTTPRequest::create('GET', '/');
+        }
+        $this->parseURL($request);
+        $dummy = $this->startDate ? $this->startDate->copy() : Carbon::now();
+        $yearRange = range((int) $dummy->copy()->subYears(3)->format('Y'), (int) $dummy->copy()->addYears(3)->format('Y'));
         $form = Form::create(
             $this,
             __FUNCTION__,
             FieldList::create(
-                $m = DropdownField::create('Month', '', CalendarUtil::getMonthsMap('%B')),
+                $m = DropdownField::create('Month', '', CalendarUtil::getMonthsMap('F')),
                 $y = DropdownField::create('Year', '', array_combine($yearRange, $yearRange))
             ),
             FieldList::create(
@@ -702,32 +731,38 @@ class CalendarController extends PageController
             )
         );
 
-        if ($this->startDate) {
-            $m->setValue($this->startDate->format('m'));
-            $y->setValue($this->startDate->format('Y'));
-        } else {
-            $m->setValue(date('m'));
-            $y->setValue(date('Y'));
-        }
+        $m->setValue($dummy->format('m'));
+        $y->setValue($dummy->format('Y'));
 
         return $form;
     }
 
     public function doMonthJump($data, $form)
     {
+        $year = (int) ($data['Year'] ?? 0);
+        $month = (int) ($data['Month'] ?? 0);
+        if ($year < 1900 || $year > 2999 || $month < 1 || $month > 12) {
+            return $this->redirectBack();
+        }
+
         return $this->redirect(
             parent::join_links(
-                $this->Link('/show'),
-                $data['Year'].$data['Month']
+                $this->Link('show'),
+                sprintf('%04d%02d', $year, $month)
             )
         );
     }
 
     public function getOrganiser()
     {
-        $organiser = $this->config()->default_organiser
-            ? $this->config()->default_organiser
-            : ":MAILTO:".Email::config()->admin_email;
+        $organiser = $this->config()->default_organiser;
+        if (!$organiser) {
+            $email = Email::config()->get('admin_email');
+            if (is_array($email)) {
+                $email = array_key_first($email);
+            }
+            $organiser = $email ? ":MAILTO:" . $email : '';
+        }
 
         $this->extend('updateOrganiser', $organiser);
         return $organiser;

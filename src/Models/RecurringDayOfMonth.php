@@ -23,7 +23,7 @@ class RecurringDayOfMonth extends DataObject
     ];
 
     private static $belongs_many_many = [
-        'CalendarEvent' => CalendarEvent::class
+        'CalendarEvent' => CalendarEvent::class . '.RecurringDaysOfMonth'
     ];
     
     private static $default_sort = "Value ASC";
@@ -54,21 +54,21 @@ class RecurringDayOfMonth extends DataObject
 
     public function canCreate($member = null, $context = [])
     {
-        return Permission::check("CMS_ACCESS_CMSMain");
+        return Permission::check('CMS_ACCESS_CMSMain', 'any', $member);
     }
     
     public function canEdit($member = null)
     {
-        return Permission::check("CMS_ACCESS_CMSMain");
+        return Permission::check('CMS_ACCESS_CMSMain', 'any', $member);
     }
     
     public function canDelete($member = null)
     {
-        return Permission::check("CMS_ACCESS_CMSMain");
+        return Permission::check('CMS_ACCESS_CMSMain', 'any', $member);
     }
     
     public function canView($member = null)
     {
-        return Permission::check("CMS_ACCESS_CMSMain");
+        return Permission::check('CMS_ACCESS_CMSMain', 'any', $member);
     }
 }

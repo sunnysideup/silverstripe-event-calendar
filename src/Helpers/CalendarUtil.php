@@ -96,6 +96,7 @@ class CalendarUtil
      */
     public static function localize(int $start, ?int $end, string $key)
     {
+        $end ??= $start;
         $customDateTemplates = Config::inst()->get(static::class, 'custom_date_templates');
         if (is_array($customDateTemplates) && isset($customDateTemplates[$key])) {
             $template = $customDateTemplates[$key];
@@ -111,60 +112,80 @@ class CalendarUtil
     }
 
     /**
+     * Turns a URL segment such as 2024, 202403, 2024-03 or 20240315 into a valid Y-m-d date.
+     * Anything that is not a valid date results in today's date.
+     *
+     * @param mixed $str
      * @return string
      */
     public static function get_date_from_string($str)
     {
-        $str = str_replace('-', '', $str);
-        if (is_numeric($str)) {
-            $missing = (8 - strlen((string) $str));
-            if ($missing > 0) {
-                while ($missing > 0) {
-                    $str .= "01";
-                    $missing -= 2;
-                }
+        $str = str_replace('-', '', (string) $str);
+        if (preg_match('/^(\d{4})(\d{2})?(\d{2})?$/', $str, $matches)) {
+            $year = (int) $matches[1];
+            $month = (int) ($matches[2] ?? 1);
+            $day = (int) ($matches[3] ?? 1);
+            if ($year >= 1900 && $year <= 2999 && checkdate($month, $day, $year)) {
+                return sprintf('%04d-%02d-%02d', $year, $month, $day);
             }
-            return substr((string) $str, 0, 4) . "-" . substr((string) $str, 4, 2) . "-" . substr((string) $str, 6, 2);
         }
 
         return date('Y-m-d');
     }
 
     /**
-     * @return array|null
+     * Returns the start and end part of a human readable date range
+     *
+     * @return array
      */
     public static function get_date_string($startDate, $endDate)
     {
-        $strStartDate = null;
-        $strEndDate = null;
         $start = strtotime((string) $startDate);
         $end = strtotime((string) $endDate);
+
+        // Invalid date. Get me out of here!
+        if (!$start || $start < 1) {
+            return ['', ''];
+        }
 
         $startYear = date("Y", $start);
         $startMonth = date("m", $start);
 
-        $endYear = date("Y", $end);
-        $endMonth = date("m", $end);
-
-        // Invalid date. Get me out of here!
-        if ($start < 1) {
-            return;
-        }
-
         // Only one day long!
         if ($start == $end || !$end || $end < 1) {
             $key = self::ONE_DAY;
-        } elseif ($startYear == $endYear) {
-            $key = ($startMonth == $endMonth) ? self::SAME_MONTH_SAME_YEAR : self::DIFF_MONTH_SAME_YEAR;
         } else {
-            $key = self::DIFF_MONTH_DIFF_YEAR;
+            $endYear = date("Y", $end);
+            $endMonth = date("m", $end);
+            if ($startYear == $endYear) {
+                $key = ($startMonth == $endMonth) ? self::SAME_MONTH_SAME_YEAR : self::DIFF_MONTH_SAME_YEAR;
+            } else {
+                $key = self::DIFF_MONTH_DIFF_YEAR;
+            }
         }
-        $dateString = self::localize($start, $end, $key);
+        $dateString = self::localize($start, $end ?: $start, $key);
         $brokenUpIntoStartAndEnd = explode(self::config()->start_end_separator, $dateString);
         if (count($brokenUpIntoStartAndEnd) === 2) {
             return [$brokenUpIntoStartAndEnd[0], $brokenUpIntoStartAndEnd[1]];
         }
         return [$dateString, ""];
+    }
+
+    /**
+     * Escapes a value for use as an iCalendar TEXT value (RFC 5545 section 3.3.11).
+     * This also removes anything that could be used to inject additional iCalendar properties.
+     *
+     * @param mixed $value
+     * @return string
+     */
+    public static function escape_ics_text($value): string
+    {
+        $value = html_entity_decode(strip_tags((string) $value), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $value = str_replace(["\r\n", "\r"], "\n", $value);
+        $value = preg_replace('/[\x00-\x09\x0B-\x1F\x7F]/u', '', $value) ?? '';
+        $value = str_replace(['\\', ';', ',', "\n"], ['\\\\', '\\;', '\\,', '\\n'], $value);
+
+        return trim($value);
     }
 
     /**

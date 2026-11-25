@@ -22,7 +22,6 @@ use SilverStripe\Forms\GridField\GridField;
 use SilverStripe\Forms\GridField\GridFieldConfig_RecordEditor;
 use SilverStripe\View\Requirements;
 
-use SilverStripe\Assets\Shortcodes\ImageShortcodeProvider;
 use UncleCheese\EventCalendar\Helpers\RecursionReader;
 use UncleCheese\EventCalendar\Models\Region;
 use UncleCheese\EventCalendar\Models\CalendarDateTime;
@@ -63,6 +62,7 @@ class CalendarEvent extends Page
     private static $has_one = [
         'EventImage' => Image::class,
     ];
+
     private static $owns = [
         'EventImage',
     ];
@@ -87,9 +87,7 @@ class CalendarEvent extends Page
 
     public function getCMSFields()
     {
-        $self = $this;
-
-        $this->beforeUpdateCMSFields(function ($f) use ($self) {
+        $this->beforeUpdateCMSFields(function ($f) {
             Requirements::javascript('sunnysideup/silverstripe-event-calendar:client/dist/js/calendar_cms.js');
             Requirements::css('sunnysideup/silverstripe-event-calendar:client/dist/css/calendar_cms.css');
 
@@ -109,7 +107,7 @@ class CalendarEvent extends Page
                 'Content'
             );
 
-            $dt = _t(__CLASS__.'DATESANDTIMES', 'Dates and Times');
+            $dt = _t(__CLASS__.'.DATESANDTIMES', 'Dates and Times');
             $recursion = _t(__CLASS__.'.RECURSION', 'Recursion');
 
             $f->addFieldToTab(
@@ -117,7 +115,7 @@ class CalendarEvent extends Page
                 GridField::create(
                     'DateTimes',
                     _t(Calendar::class.'.DATETIMEDESCRIPTION', 'Add dates for this event'),
-                    $self->DateTimes(),
+                    $this->DateTimes(),
                     GridFieldConfig_RecordEditor::create()
                 )
             );
@@ -224,15 +222,13 @@ class CalendarEvent extends Page
                 GridField::create(
                     'Exceptions',
                     _t(__CLASS__.'.ANYEXCEPTIONS', 'Any exceptions to this pattern? Add the dates below.'),
-                    $self->Exceptions(),
+                    $this->Exceptions(),
                     GridFieldConfig_RecordEditor::create()
                 )
             );
         });
 
-        $f = parent::getCMSFields();
-
-        return $f;
+        return parent::getCMSFields();
     }
 
     public function getRecursionReader()

@@ -12,6 +12,7 @@ namespace UncleCheese\EventCalendar\Pages;
 
 use Carbon\Carbon;
 use ICal\ICal;
+use Throwable;
 use SilverStripe\CMS\Model\SiteTree;
 use SilverStripe\Control\Controller;
 use SilverStripe\Core\Config\Config;
@@ -21,25 +22,17 @@ use SilverStripe\Forms\DropdownField;
 use SilverStripe\Forms\NumericField;
 use SilverStripe\Forms\TextField;
 
-/**
-  * ### @@@@ START REPLACEMENT @@@@ ###
-  * WHY: automated upgrade
-  * OLD: SilverStripe\ORM\ArrayList
-  * NEW: SilverStripe\Model\List\ArrayList ...  (COMPLEX)
-  * EXP: Removed deprecated class SilverStripe\ORM\ArrayList - renamed to ArrayList. See: https://docs.silverstripe.org/en/6/changelogs/6.0.0/
-  * ### @@@@ STOP REPLACEMENT @@@@ ###
-  */
 use SilverStripe\Model\List\ArrayList;
 use SilverStripe\ORM\DataList;
+use SilverStripe\ORM\DataObject;
 use SilverStripe\Forms\GridField\GridField;
 use SilverStripe\Forms\GridField\GridFieldConfig_RecordEditor;
 use SilverStripe\View\Requirements;
 use UncleCheese\EventCalendar\Models\CachedCalendarEntry;
 use UncleCheese\EventCalendar\Models\CalendarAnnouncement;
 use UncleCheese\EventCalendar\Models\Region;
+use UncleCheese\EventCalendar\Helpers\ICSFeedReader;
 use UncleCheese\EventCalendar\Models\ICSFeed;
-use UncleCheese\EventCalendar\Pages\CalendarController;
-use UncleCheese\EventCalendar\Pages\CalendarEvent;
 use UncleCheese\EventCalendar\Views\CalendarWidget;
 use Page;
 
@@ -70,7 +63,7 @@ class Calendar extends Page
     ];
 
     private static $belongs_many_many = [
-        'ParentCalendars' => self::class
+        'ParentCalendars' => self::class . '.NestedCalendars'
     ];
 
     private static $allowed_children = [
@@ -149,6 +142,28 @@ class Calendar extends Page
      */
     private static $caching_enabled = false;
 
+    /**
+     * Number of years that are cached by the CachedCalendarBuildTask
+     *
+     * @var int
+     */
+    private static $cache_future_years = 2;
+
+    /**
+     * The longest period (in days) that is expanded for recurring events and feeds in one request.
+     * Protects the website against requests for ridiculously long date ranges.
+     *
+     * @var int
+     */
+    private static $max_date_range_days = 1100;
+
+    /**
+     * How far (in days) we look ahead for the next recurrences of an event.
+     *
+     * @var int
+     */
+    private static $max_recurrence_lookahead_days = 3650;
+
     protected $eventClass_cache;
     protected $announcementClass_cache;
     protected $datetimeClass_cache;
@@ -174,9 +189,7 @@ class Calendar extends Page
 
     public function getCMSFields()
     {
-        $self = $this;
-
-        $this->beforeUpdateCMSFields(function ($f) use ($self) {
+        $this->beforeUpdateCMSFields(function ($f) {
             Requirements::javascript('sunnysideup/silverstripe-event-calendar:client/dist/js/calendar_cms.js');
 
             $configuration = _t(__CLASS__.'.CONFIGURATION', 'Configuration');
@@ -208,7 +221,7 @@ class Calendar extends Page
                 GridField::create(
                     "Announcements",
                     $announcements,
-                    $self->Announcements(),
+                    $this->Announcements(),
                     GridFieldConfig_RecordEditor::create()
                 )->setDescription(
                     _t(__CLASS__.'.ANNOUNCEMENTDESCRIPTION', 'Announcements are simple entries you can add to your calendar that do not have detail pages, e.g. "Office closed"')
@@ -222,14 +235,14 @@ class Calendar extends Page
                 GridField::create(
                     "Feeds",
                     $feeds,
-                    $self->Feeds(),
+                    $this->Feeds(),
                     GridFieldConfig_RecordEditor::create()
                 )->setDescription(
                     _t(__CLASS__.'.ICSFEEDDESCRIPTION', 'Add ICS feeds to your calendar to include events from external sources')
                 )
             );
 
-            $otherCals = self::get()->exclude("ID", $self->ID);
+            $otherCals = self::get()->exclude("ID", $this->ID);
             if ($otherCals->exists()) {
                 $f->addFieldToTab(
                     "Root.$feeds",
@@ -245,7 +258,7 @@ class Calendar extends Page
                 TextField::create('RSSTitle', _t(__CLASS__.'.RSSTITLE', 'Title of RSS feed')),
                 'Content'
             );
-            $f->addFieldsToTab(
+            $f->addFieldToTab(
                 'Root.RegionList',
                 GridField::create(
                     'Regions',
@@ -256,8 +269,7 @@ class Calendar extends Page
             );
         });
 
-
-        return $f = parent::getCMSFields();
+        return parent::getCMSFields();
     }
 
     /**
@@ -302,7 +314,7 @@ class Calendar extends Page
         if ($this->dateToEventRelation_cache) {
             return (string) $this->dateToEventRelation_cache;
         }
-        $dateTime = Injector::inst()->get($this->getDateTimeClass());
+        $dateTime = singleton($this->getDateTimeClass());
         foreach ($dateTime->config()->has_one as $rel => $class) {
             if ($class == $this->getEventClass()) {
                 return (string) $this->dateToEventRelation_cache = $rel.'ID';
@@ -312,23 +324,44 @@ class Calendar extends Page
     }
 
     /**
+     * Returns the date (Y-m-d) if it is a valid date, null otherwise.
+     *
+     * @param mixed $date
+     * @return string|null
+     */
+    protected static function cleanDate($date): ?string
+    {
+        $date = trim((string) $date);
+        if (preg_match('/^(\d{4})-(\d{2})-(\d{2})/', $date, $matches)
+            && checkdate((int) $matches[2], (int) $matches[3], (int) $matches[1])
+        ) {
+            return $matches[1] . '-' . $matches[2] . '-' . $matches[3];
+        }
+
+        return null;
+    }
+
+    /**
      * @param string $start Start date
      * @param string $end End date
-     * @param string $filter
+     * @param string|array|null $filter not used for cached events
      * @param int $limit Limit result set size
      * @return DataList
      */
     public function getCachedEventList($start, $end, $filter = null, $limit = null)
     {
-        return CachedCalendarEntry::get()
-            ->filter("CachedCalendarID", $this->ID)
-            ->exclude(
-                [
-                    "StartDate:LessThan" => $end,
-                    "EndDate:GreaterThan" => $start
-                ]
-            )
+        $list = CachedCalendarEntry::get()
+            ->filter("CachedCalendarID", $this->ID);
+        $start = self::cleanDate($start);
+        $end = self::cleanDate($end);
+        if ($end) {
+            $list = $list->filter("StartDate:LessThanOrEqual", $end);
+        }
+        if ($start) {
+            $list = $list->filter("EndDate:GreaterThanOrEqual", $start);
+        }
 
+        return $list
             ->sort(
                 [
                     "StartDate" => "ASC",
@@ -341,12 +374,15 @@ class Calendar extends Page
     /**
      * Get the event list for this calendar, including standard, recurring and announcements
      *
+     * The filters are added to a query as is, so use parameterised filters
+     * (e.g. ['"SiteTree"."Title" LIKE ?' => ['%' . $term . '%']]) when they include user input.
+     *
      * @param string $start Start date
      * @param string $end End date
-     * @param string $filter Additional filters
+     * @param string|array $filter Additional filters
      * @param int $limit Limit result set size
-     * @param int $announcementFilter Filter announcements prior to their inclusion
-     * @return DataList
+     * @param string|array $announcementFilter Filter announcements prior to their inclusion
+     * @return DataList|ArrayList
      */
     public function getEventList(
         $start,
@@ -359,6 +395,9 @@ class Calendar extends Page
             return $this->getCachedEventList($start, $end, $filter, $limit);
         }
 
+        $start = self::cleanDate($start);
+        $end = self::cleanDate($end);
+
         $eventList = ArrayList::create();
 
         foreach ($this->getAllCalendars() as $calendar) {
@@ -366,20 +405,18 @@ class Calendar extends Page
                 $eventList->merge($events);
             }
             $announcements = DataList::create($this->getAnnouncementClass())
-                ->filter(
-                    [
-                        "CalendarID" => $calendar->ID,
-                        "StartDate:GreaterThanOrEqual" => $start,
-                        "EndDate:LessThanOrEqual" => $end
-                    ]
-                );
+                ->filter(['CalendarID' => $calendar->ID]);
+            if ($start) {
+                $announcements = $announcements->filter('StartDate:GreaterThanOrEqual', $start);
+            }
+            if ($end) {
+                $announcements = $announcements->filter('EndDate:LessThanOrEqual', $end);
+            }
             if ($announcementFilter) {
                 $announcements = $announcements->where($announcementFilter);
             }
-            if ($announcements) {
-                foreach ($announcements as $announcement) {
-                    $eventList->push($announcement);
-                }
+            foreach ($announcements as $announcement) {
+                $eventList->push($announcement);
             }
             if ($recurring = $calendar->getRecurringEvents($filter)) {
                 $calendar->addRecurringEvents($start, $end, $recurring, $eventList);
@@ -403,7 +440,7 @@ class Calendar extends Page
      *
      * @param string $start Start date
      * @param string $end End date
-     * @param string $filter Additional filters
+     * @param string|array $filter Additional filters
      * @return DataList
      */
     protected function getStandardEvents($start, $end, $filter = null)
@@ -411,8 +448,12 @@ class Calendar extends Page
         $eventTable = Config::inst()->get($this->getEventClass(), 'table_name');
         $relation = $this->getDateToEventRelation();
         $siteTreeTable = SiteTree::config()->table_name;
+        $dateTimeClass = $this->getDateTimeClass();
+        $schema = DataObject::getSchema();
+        $startField = '"' . $schema->tableForField($dateTimeClass, 'StartDate') . '"."StartDate"';
+        $endField = '"' . $schema->tableForField($dateTimeClass, 'EndDate') . '"."EndDate"';
 
-        $list = DataList::create($this->getDateTimeClass())
+        $list = DataList::create($dateTimeClass)
             ->innerJoin($eventTable, "\"$relation\" = \"$eventTable\".\"ID\"")
             ->innerJoin($siteTreeTable, "\"$siteTreeTable\".\"ID\" = \"$eventTable\".\"ID\"");
 
@@ -428,16 +469,14 @@ class Calendar extends Page
         $list = $list->filter($filters);
 
         if ($start && $end) {
-            $list = $list->where(
-                "
-				(StartDate <= '$start' AND EndDate >= '$end') OR
-				(StartDate BETWEEN '$start' AND '$end') OR
-				(EndDate BETWEEN '$start' AND '$end')"
-            );
+            $list = $list->where([
+                "($startField <= ? AND $endField >= ?) OR ($startField BETWEEN ? AND ?) OR ($endField BETWEEN ? AND ?)"
+                => [$start, $end, $start, $end, $start, $end]
+            ]);
         } elseif ($start) {
-            $list = $list->where("(StartDate >= '$start' OR EndDate > '$start')");
+            $list = $list->where(["($startField >= ? OR $endField > ?)" => [$start, $start]]);
         } elseif ($end) {
-            $list = $list->where("(EndDate <= '$end' OR StartDate < '$end')");
+            $list = $list->where(["($endField <= ? OR $startField < ?)" => [$end, $end]]);
         }
         if ($filter) {
             $list = $list->where($filter);
@@ -449,7 +488,7 @@ class Calendar extends Page
     /**
      * Get the list of events in this calendar that are set to recur
      *
-     * @param string $filter Additional filters
+     * @param string|array $filter Additional filters
      * @return DataList|false
      */
     protected function getRecurringEvents($filter = null)
@@ -493,12 +532,15 @@ class Calendar extends Page
         }
         $counter->addDay()->startOfDay();
         $dates = ArrayList::create();
-        while ($dates->Count() != $this->OtherDatesCount) {
+        $wanted = max(0, (int) $this->OtherDatesCount);
+        $maxDays = max(1, (int) $this->config()->max_recurrence_lookahead_days);
+        $reader = $eventObj->getRecursionReader();
+        for ($i = 0; $i < $maxDays && $dates->Count() < $wanted; $i++) {
             // check the end date
             if ($endDate && $endDate > 0 && $endDate <= $counter->getTimestamp()) {
                 break;
             }
-            if ($eventObj->getRecursionReader()->recursionHappensOn($counter->getTimestamp())) {
+            if ($reader->recursionHappensOn($counter->getTimestamp())) {
                 $dates->push($this->newRecursionDateTime($datetimeObj, $counter->toDateString()));
             }
             $counter->addDay()->startOfDay();
@@ -517,8 +559,17 @@ class Calendar extends Page
      */
     protected function addRecurringEvents($startDate, $endDate, $recurringEvents, $allEvents)
     {
-        $dateCounter = Carbon::parse($startDate);
-        $end = Carbon::parse($endDate);
+        $rangeStart = $startDate ? Carbon::parse($startDate)->startOfDay() : Carbon::now()->startOfDay();
+        $rangeEnd = $endDate
+            ? Carbon::parse($endDate)->startOfDay()
+            : $rangeStart->copy()->addMonths(max(1, (int) $this->DefaultFutureMonths));
+        $maxDays = max(1, (int) $this->config()->max_date_range_days);
+        $latestEnd = $rangeStart->copy()->addDays($maxDays);
+        if ($rangeEnd > $latestEnd) {
+            $rangeEnd = $latestEnd;
+        }
+
+        $maxListed = (int) self::config()->max_recurring_events_listed;
 
         foreach ($recurringEvents as $recurringEvent) {
             $reader = $recurringEvent->getRecursionReader();
@@ -533,29 +584,28 @@ class Calendar extends Page
             }
             $recurringEventDatetimes = $recurringEvent->$relation()->filter(
                 [
-                    'StartDate:LessThanOrEqual' => $end->toDateString(),
-                    'EndDate:GreaterThanOrEqual' => $dateCounter->toDateString()
+                    'StartDate:LessThanOrEqual' => $rangeEnd->toDateString(),
+                    'EndDate:GreaterThanOrEqual' => $rangeStart->toDateString()
                 ]
             );
 
             foreach ($recurringEventDatetimes as $recurringEventDatetime) {
-                $start = Carbon::parse($recurringEventDatetime->StartDate);
-                if ($start->getTimestamp() > $dateCounter->getTimestamp()) {
+                $dateCounter = $rangeStart->copy();
+                $start = Carbon::parse($recurringEventDatetime->StartDate)->startOfDay();
+                if ($start > $dateCounter) {
                     $dateCounter = $start;
                 }
+                $endStamp = $recurringEventDatetime->EndDate
+                    ? strtotime((string) $recurringEventDatetime->EndDate)
+                    : false;
                 $recurrenceAdded = 0;
-                while ($dateCounter <= $end) {
-                    if (self::config()->max_recurring_events_listed
-                        && ($recurrenceAdded == self::config()->max_recurring_events_listed)
-                    ) {
+                while ($dateCounter <= $rangeEnd) {
+                    if ($maxListed && $recurrenceAdded == $maxListed) {
                         break;
                     }
                     // check the end date
-                    if ($recurringEventDatetime->EndDate) {
-                        $endStamp = strtotime((string) $recurringEventDatetime->EndDate);
-                        if ($endStamp > 0 && $endStamp < $dateCounter->getTimestamp()) {
-                            break;
-                        }
+                    if ($endStamp && $endStamp > 0 && $endStamp < $dateCounter->getTimestamp()) {
+                        break;
                     }
                     if ($reader->recursionHappensOn($dateCounter->getTimestamp())) {
                         $e = $this->newRecursionDateTime($recurringEventDatetime, $dateCounter->toDateString());
@@ -564,7 +614,6 @@ class Calendar extends Page
                     }
                     $dateCounter->addDay()->startOfDay();
                 }
-                $dateCounter = Carbon::parse($startDate);
             }
         }
     }
@@ -595,54 +644,68 @@ class Calendar extends Page
     /**
      * Get events from specified feeds that fall within a date range
      *
-     * @param string $stardDate Range start date
+     * @param string $startDate Range start date
      * @param string $endDate Range end date
      * @return ArrayList
      */
     public function getFeedEvents($startDate, $endDate)
     {
-        $start = new \DateTime($startDate);
-        // single day views don't pass end dates
-        $end = $endDate ? new \DateTime($endDate) : $start;
-        $feeds = $this->Feeds();
         $feedevents = ArrayList::create();
+        $feeds = $this->Feeds();
+        if (!$feeds->exists()) {
+            return $feedevents;
+        }
+
+        $startDate = self::cleanDate($startDate) ?: Carbon::now()->toDateString();
+        // single day views don't pass end dates
+        $endDate = self::cleanDate($endDate) ?: $startDate;
+        $timezone = new \DateTimeZone($this->config()->timezone);
+        $reader = ICSFeedReader::create();
+
         foreach ($feeds as $feed) {
-            $feedreader = new ICal($feed->URL);
-            foreach ($feedreader->events() as $event) {
+            $body = $reader->read($feed->URL);
+            if (!$body) {
+                continue;
+            }
+            try {
+                $feedreader = new ICal(false, ['defaultTimeZone' => $timezone->getName()]);
+                $feedreader->initString($body);
+                $icalEvents = $feedreader->eventsFromRange($startDate . ' 00:00:00', $endDate . ' 23:59:59');
+            } catch (Throwable $e) {
+                continue;
+            }
+            foreach ($icalEvents as $event) {
+                if (empty($event->dtstart_array[2])) {
+                    continue;
+                }
+                $startdatetime = (new \DateTime('@' . $event->dtstart_array[2]))->setTimezone($timezone);
+                $enddatetime = !empty($event->dtend_array[2])
+                    ? (new \DateTime('@' . $event->dtend_array[2]))->setTimezone($timezone)
+                    : clone $startdatetime;
+
+                // all day events end at the start of the next day
+                $allDay = isset($event->dtstart_array[1]) && preg_match('/^\d{8}$/', (string) $event->dtstart_array[1]);
+                if ($allDay && $enddatetime > $startdatetime) {
+                    $enddatetime->modify('-1 day');
+                }
+
                 // translate iCal schema into CalendarAnnouncement schema (datetime + title/content)
                 $feedevent = CalendarAnnouncement::create()
                     ->update(
                         [
-                            'ID' => 'ICS_'.$feed->ID,
+                            'ID' => 'ICS_' . $feed->ID,
                             'Feed' => true,
                             'CalendarID' => $this->ID,
-                            'Title' => $event['SUMMARY']
-                        ]
-                    );
-                if (isset($event['DESCRIPTION'])) {
-                    $feedevent->Content = $event['DESCRIPTION'];
-                }
-                $startdatetime = $this->iCalDateToDateTime($event['DTSTART']);
-                $enddatetime = $this->iCalDateToDateTime($event['DTEND']);
-
-                //Set event start/end to midnight to allow comparisons below to work
-                $startdatetime->modify('00:00:00');
-                $enddatetime->modify('00:00:00');
-
-                if (($startdatetime < $start && $enddatetime < $start)
-                    || $startdatetime > $end && $enddatetime > $end) {
-                    // do nothing; dates outside range
-                } else {
-                    $feedevent->update(
-                        [
+                            'Title' => (string) ($event->summary ?? ''),
+                            'Content' => (string) ($event->description ?? ''),
+                            'AllDay' => $allDay ? 1 : 0,
                             'StartDate' => $startdatetime->format('Y-m-d'),
-                            'StartTime' => $startdatetime->format('H:i:s'),
+                            'StartTime' => $allDay ? null : $startdatetime->format('H:i:s'),
                             'EndDate' => $enddatetime->format('Y-m-d'),
-                            'EndTime' => $enddatetime->format('H:i:s')
+                            'EndTime' => $allDay ? null : $enddatetime->format('H:i:s')
                         ]
                     );
-                    $feedevents->push($feedevent);
-                }
+                $feedevents->push($feedevent);
             }
         }
         return $feedevents;
@@ -697,28 +760,28 @@ class Calendar extends Page
 
     public function UpcomingAnnouncements($limit = 5, $filter = null)
     {
-        return $this->Announcements()
-            ->filter('StartDate:GreaterThan', 'NOW()')
-            ->where($filter)
-            ->limit($limit);
+        $announcements = $this->Announcements()
+            ->filter('StartDate:GreaterThan', Carbon::now()->toDateString());
+        if ($filter) {
+            $announcements = $announcements->where($filter);
+        }
+
+        return $announcements->limit($limit);
     }
 
     /**
-     * @return DataList
+     * @return DataList|ArrayList
      */
     public function RecentEvents($limit = null, $filter = null)
     {
-        $startDate = Carbon::now();
-        $endDate = Carbon::now();
         $l = ($limit === null) ? $this->config()->recent_events_default_limit : $limit;
         $events = $this->getEventList(
-            $startDate->subMonths($this->DefaultFutureMonths)->toDateString(),
-            $endDate->yesterday()->toDateString(),
-            $filter,
-            $l
-        )->sort(['StartDate' => 'DESC']);
+            Carbon::now()->subMonths($this->DefaultFutureMonths)->toDateString(),
+            Carbon::yesterday()->toDateString(),
+            $filter
+        )->sort(['StartDate' => 'DESC', 'StartTime' => 'DESC']);
 
-        return $events->limit($limit);
+        return $events->limit($l);
     }
 
     /**

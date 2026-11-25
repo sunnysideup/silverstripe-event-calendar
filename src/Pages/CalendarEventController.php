@@ -10,6 +10,7 @@
 
 namespace UncleCheese\EventCalendar\Pages;
 
+use Carbon\Carbon;
 use SilverStripe\ORM\DataList;
 use SilverStripe\View\Requirements;
 use UncleCheese\EventCalendar\Pages\Calendar;
@@ -40,7 +41,6 @@ class CalendarEventController extends PageController
     {
         return DataList::create($this->data()->getDateTimeClass())
             ->filter("EventID", $this->ID)
-
             ->sort(["StartDate" => "ASC"]);
     }
 
@@ -50,24 +50,41 @@ class CalendarEventController extends PageController
     public function UpcomingDates($limit = 3)
     {
         return $this->DateAndTime()
-            ->where("StartDate:GreaterThanOrEqual", "DATE(NOW())")
+            ->filter("StartDate:GreaterThanOrEqual", Carbon::now()->toDateString())
             ->limit($limit);
     }
 
     /**
-     * @return DataList
+     * The (valid) date asked for in the URL, e.g. ?date=2024-03-15
+     *
+     * @return string|null Y-m-d
+     */
+    protected function getRequestedDate(): ?string
+    {
+        $date = $this->getRequest()->getVar('date');
+        if (!is_string($date) || $date === '') {
+            return null;
+        }
+        $timestamp = strtotime($date);
+        if (!$timestamp || $timestamp < 1) {
+            return null;
+        }
+
+        return date('Y-m-d', $timestamp);
+    }
+
+    /**
+     * @return DataList|false
      */
     public function getOtherDates()
     {
-        if (!isset($_REQUEST['date'])) {
-            $dateObj =  $this->DateAndTime()->first();
+        $date = $this->getRequestedDate();
+        if (!$date) {
+            $dateObj = $this->DateAndTime()->first();
             if (!$dateObj) {
                 return false;
             }
             $date = $dateObj->StartDate;
-
-        } elseif (strtotime((string) $_REQUEST['date']) > 0) {
-            $date = date('Y-m-d', strtotime((string) $_REQUEST['date']));
         }
 
         $cal = $this->Parent();
@@ -76,8 +93,11 @@ class CalendarEventController extends PageController
             $datetimeObj = DataList::create($this->data()->getDateTimeClass())
                 ->filter('EventID', $this->ID)
                 ->first();
+            if (!$datetimeObj) {
+                return false;
+            }
             $datetimeObj->StartDate = $date;
-            return $cal->getNextRecurringEvents($this, $datetimeObj);
+            return $cal->getNextRecurringEvents($this->data(), $datetimeObj);
         }
 
         return $this->DateAndTime()
@@ -93,23 +113,21 @@ class CalendarEventController extends PageController
         $allDates = DataList::create($this->data()->getDateTimeClass())
             ->filter("EventID", $this->ID)
             ->sort(["StartDate" => "ASC"]);
-        if (!isset($_REQUEST['date'])) {
+        $date = $this->getRequestedDate();
+        if (!$date) {
             // If no date filter specified, return the first one
             return $allDates->first();
         }
 
-        if (strtotime((string) $_REQUEST['date']) > 0) {
-
-            $date = date('Y-m-d', strtotime((string) $_REQUEST['date']));
-            if ($this->Recursion) {
-                $datetime = $allDates->first();
-                if ($datetime) {
-                    $datetime->StartDate = $date;
-                    $datetime->EndDate = $date;
-                    return $datetime;
-                }
+        if ($this->Recursion) {
+            $datetime = $allDates->first();
+            if ($datetime) {
+                $datetime->StartDate = $date;
+                $datetime->EndDate = $date;
+                return $datetime;
             }
-            return $allDates->filter("StartDate", $date)->first();
         }
+
+        return $allDates->filter("StartDate", $date)->first();
     }
 }

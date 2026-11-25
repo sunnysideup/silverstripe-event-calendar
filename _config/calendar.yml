@@ -1,5 +1,8 @@
 ---
-Name: 'event-calendar'
+Name: event-calendar
 ---
-CachedCalendarTask:
-  cache_future_years: 2
+SilverStripe\Core\Injector\Injector:
+  Psr\SimpleCache\CacheInterface.EventCalendarFeeds:
+    factory: SilverStripe\Core\Cache\CacheFactory
+    constructor:
+      namespace: "EventCalendarFeeds"

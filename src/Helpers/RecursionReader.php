@@ -3,6 +3,8 @@
 namespace UncleCheese\EventCalendar\Helpers;
 
 use Carbon\Carbon;
+use Carbon\CarbonInterface;
+use DateTimeImmutable;
 use UncleCheese\EventCalendar\Pages\CalendarEvent;
 use SilverStripe\ORM\DataList;
 use SilverStripe\Core\Injector\Injectable;
@@ -30,7 +32,7 @@ class RecursionReader
     protected $eventClass;
 
     /**
-     * @var string
+     * @var int|null
      */
     protected $ts;
 
@@ -54,7 +56,19 @@ class RecursionReader
      */
     public static function difference_in_months($dateObj1, $dateObj2)
     {
-        return (($dateObj1->format('Y') * 12) + $dateObj1->format('n')) - (($dateObj2->format('Y') * 12) + $dateObj2->format('n'));
+        return (((int) $dateObj1->format('Y') * 12) + (int) $dateObj1->format('n'))
+            - (((int) $dateObj2->format('Y') * 12) + (int) $dateObj2->format('n'));
+    }
+
+    /**
+     * Number of calendar days between two timestamps (ignores time of day and daylight saving).
+     */
+    protected static function difference_in_days(int $ts1, int $ts2): int
+    {
+        $a = new DateTimeImmutable(date('Y-m-d', $ts1));
+        $b = new DateTimeImmutable(date('Y-m-d', $ts2));
+
+        return (int) $a->diff($b)->format('%r%a');
     }
 
     public function __construct(CalendarEvent $event)
@@ -69,27 +83,22 @@ class RecursionReader
         if ($datetime = DataList::create($this->datetimeClass)
             ->filter($relation, $event->ID)->first()
         ) {
-            $this->ts = strtotime((string) $datetime->StartDate);
+            $ts = strtotime((string) $datetime->StartDate);
+            $this->ts = $ts ?: null;
         }
 
         if ($event->CustomRecursionType == CalendarEvent::RECUR_INTERVAL_WEEKLY) {
-            if ($daysOfWeek = $event->getManyManyComponents('RecurringDaysOfWeek')) {
-                foreach ($daysOfWeek as $day) {
-                    $this->allowedDaysOfWeek[] = $day->Value;
-                }
+            foreach ($event->RecurringDaysOfWeek() as $day) {
+                $this->allowedDaysOfWeek[] = (int) $day->Value;
             }
         } elseif ($event->CustomRecursionType == CalendarEvent::RECUR_INTERVAL_MONTHLY) {
-            if ($daysOfMonth = $event->getManyManyComponents('RecurringDaysOfMonth')) {
-                foreach ($daysOfMonth as $day) {
-                    $this->allowedDaysOfMonth[] = $day->Value;
-                }
+            foreach ($event->RecurringDaysOfMonth() as $day) {
+                $this->allowedDaysOfMonth[] = (int) $day->Value;
             }
         }
 
-        if ($exceptions = $event->getComponents('Exceptions')) {
-            foreach ($exceptions as $exception) {
-                $this->exceptions[] = $exception->ExceptionDate;
-            }
+        foreach ($event->Exceptions() as $exception) {
+            $this->exceptions[] = $exception->ExceptionDate;
         }
     }
 
@@ -99,71 +108,64 @@ class RecursionReader
      */
     public function recursionHappensOn($ts)
     {
-        $testDate = Carbon::createFromTimestamp($ts);
-        $startDate = Carbon::createFromTimestamp($this->ts);
-        $result = false;
+        if (!$this->ts) {
+            return false;
+        }
+
+        $ts = (int) $ts;
+        $timezone = date_default_timezone_get();
+        $testDate = Carbon::createFromTimestamp($ts, $timezone);
+        $startDate = Carbon::createFromTimestamp($this->ts, $timezone);
 
         // Current date is before the recurring event begins.
-        if ($testDate->getTimestamp() < $startDate->getTimestamp()
-            || in_array($testDate->toDateString(), $this->exceptions)
-        ) {
-            return $result;
+        if ($testDate->toDateString() < $startDate->toDateString()) {
+            return false;
+        }
+        if (in_array($testDate->toDateString(), $this->exceptions, true)) {
+            return false;
         }
 
         switch ($this->event->CustomRecursionType) {
-
-            // Daily
             case CalendarEvent::RECUR_INTERVAL_DAILY:
-                if ($this->event->DailyInterval
-                    && ((($ts - $this->ts) / self::DAY_SECONDS) % $this->event->DailyInterval == 0)
-                ) {
-                    $result = true;
+                $interval = (int) $this->event->DailyInterval;
+                if ($interval < 1) {
+                    return false;
                 }
-                break;
+                return self::difference_in_days($this->ts, $ts) % $interval === 0;
 
-                // Weekly
             case CalendarEvent::RECUR_INTERVAL_WEEKLY:
-                $testFirstDay = clone $testDate;
-                $testFirstDay->modify(
-                    ($testFirstDay->format('l') == 'Sunday')
-                    ? 'Monday last week'
-                    : 'Monday this week'
-                );
-                if ((($testFirstDay->getTimestamp() - $startDate->startOfWeek()->getTimestamp()) / self::WEEK_SECONDS) % $this->event->WeeklyInterval == 0
-                    && in_array($testDate->format('w'), $this->allowedDaysOfWeek)
-                ) {
-                    $result = true;
-                };
-                break;
+                $interval = max(1, (int) $this->event->WeeklyInterval);
+                $testWeekStart = $testDate->copy()->startOfWeek(CarbonInterface::MONDAY);
+                $startWeekStart = $startDate->copy()->startOfWeek(CarbonInterface::MONDAY);
+                $weeks = intdiv(self::difference_in_days($startWeekStart->getTimestamp(), $testWeekStart->getTimestamp()), 7);
 
-                // Monthly
+                return $weeks % $interval === 0
+                    && in_array((int) $testDate->format('w'), $this->allowedDaysOfWeek, true);
+
             case CalendarEvent::RECUR_INTERVAL_MONTHLY:
-                if (self::difference_in_months($testDate, $startDate) % $this->event->MonthlyInterval == 0) {
-                    if ($this->event->MonthlyRecursionType1 == 1) {
-
-                        // A given set of dates in the month e.g. 2 and 15.
-                        if (in_array($testDate->reset()->format('j'), $this->allowedDaysOfMonth)) {
-                            $result = true;
-                        }
-                    } elseif ($this->event->MonthlyRecursionType2 == 1) {
-
-                        // e.g. "First Monday of the month"
-                        if ($this->event->MonthlyIndex == 5) {
-                            // Last day of the month?
-                            $targetDate = $testDate->addMonth()->startOfMonth()->previous($this->event->MonthlyDayOfWeek)->dump();
-                        } else {
-                            $testDate->modify("last day of previous month");
-                            for ($i = 0; $i < $this->event->MonthlyIndex; $i++) {
-                                $testDate->next($this->event->MonthlyDayOfWeek)->dump();
-                            }
-                            $targetDate = $testDate->dump();
-                        }
-                        return $testDate->reset()->dump() == $targetDate;
-                    }
+                $interval = max(1, (int) $this->event->MonthlyInterval);
+                if (self::difference_in_months($testDate, $startDate) % $interval !== 0) {
+                    return false;
                 }
-                break;
+                if ($this->event->MonthlyRecursionType1 == 1) {
+                    // A given set of dates in the month e.g. 2 and 15.
+                    return in_array((int) $testDate->format('j'), $this->allowedDaysOfMonth, true);
+                }
+                if ($this->event->MonthlyRecursionType2 == 1) {
+                    // e.g. "First Monday of the month"
+                    if ((int) $testDate->format('w') !== (int) $this->event->MonthlyDayOfWeek) {
+                        return false;
+                    }
+                    $dayOfMonth = (int) $testDate->format('j');
+                    if ((int) $this->event->MonthlyIndex === 5) {
+                        // the last one of the month
+                        return $dayOfMonth + 7 > (int) $testDate->format('t');
+                    }
+                    return (int) ceil($dayOfMonth / 7) === (int) $this->event->MonthlyIndex;
+                }
+                return false;
         }
 
-        return $result;
+        return false;
     }
 }

@@ -34,9 +34,7 @@ class CalendarAnnouncement extends CalendarDateTime
 
     public function getCMSFields()
     {
-        $self = $this;
-
-        $this->beforeUpdateCMSFields(function ($f) use ($self) {
+        $this->beforeUpdateCMSFields(function ($f) {
             $f->insertBefore(
                 'StartDate',
                 TextField::create('Title', _t(__CLASS__.'.TITLE', 'Title of announcement'))
@@ -48,8 +46,7 @@ class CalendarAnnouncement extends CalendarDateTime
             );
         });
 
-        return $f = parent::getCMSFields();
-        ;
+        return parent::getCMSFields();
     }
 
     public function summaryFields()
@@ -62,6 +59,16 @@ class CalendarAnnouncement extends CalendarDateTime
             'FormattedEndTime' => _t(Calendar::class.'.ENDTIME', 'End time'),
             'FormattedAllDay' => _t(Calendar::class.'.ALLDAY', 'All day'),
         ];
+    }
+
+    /**
+     * Announcements do not have a detail page, so link to the calendar they are in.
+     *
+     * @return string
+     */
+    public function Link()
+    {
+        return $this->Calendar()->Link();
     }
 
     public function getTitle()

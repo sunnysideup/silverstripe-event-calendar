@@ -38,7 +38,6 @@ class RecurringException extends DataObject
 
     public function getCMSFields()
     {
-        //DateField::set_default_config('showcalendar', true);
         $fields = FieldList::create(
             DateField::create('ExceptionDate', _t(__CLASS__.'.EXCEPTIONDATE', 'Exception date'))
         );
@@ -60,28 +59,28 @@ class RecurringException extends DataObject
             return CalendarDateTime::config()->formatted_field_empty_string;
         }
         return CalendarUtil::get_date_format() == "mdy"
-            ? $this->obj('ExceptionDate')->Format('m-d-Y')
-            : $this->obj('ExceptionDate')->Format('d-m-Y');
+            ? $this->obj('ExceptionDate')->Format('MM-dd-yyyy')
+            : $this->obj('ExceptionDate')->Format('dd-MM-yyyy');
     }
 
 
     public function canCreate($member = null, $context = [])
     {
-        return Permission::check("CMS_ACCESS_CMSMain");
+        return Permission::check('CMS_ACCESS_CMSMain', 'any', $member);
     }
 
     public function canEdit($member = null)
     {
-        return Permission::check("CMS_ACCESS_CMSMain");
+        return Permission::check('CMS_ACCESS_CMSMain', 'any', $member);
     }
 
     public function canDelete($member = null)
     {
-        return Permission::check("CMS_ACCESS_CMSMain");
+        return Permission::check('CMS_ACCESS_CMSMain', 'any', $member);
     }
 
     public function canView($member = null)
     {
-        return Permission::check("CMS_ACCESS_CMSMain");
+        return Permission::check('CMS_ACCESS_CMSMain', 'any', $member);
     }
 }
