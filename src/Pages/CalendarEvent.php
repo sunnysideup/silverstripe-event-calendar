@@ -91,6 +91,26 @@ class CalendarEvent extends Page
             Requirements::javascript('sunnysideup/silverstripe-event-calendar:client/dist/js/calendar_cms.js');
             Requirements::css('sunnysideup/silverstripe-event-calendar:client/dist/css/calendar_cms.css');
 
+            // newer SiteTree versions scaffold all db fields / relations; remove them to avoid duplicates
+            $f->removeByName([
+                'Location',
+                'Recursion',
+                'CustomRecursionType',
+                'DailyInterval',
+                'WeeklyInterval',
+                'MonthlyInterval',
+                'MonthlyRecursionType1',
+                'MonthlyRecursionType2',
+                'MonthlyIndex',
+                'MonthlyDayOfWeek',
+                'EventImage',
+                'DateTimes',
+                'Exceptions',
+                'Regions',
+                'RecurringDaysOfWeek',
+                'RecurringDaysOfMonth',
+            ]);
+
             $f->addFieldsToTab(
                 "Root.Main",
                 [
